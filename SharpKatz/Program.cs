@@ -63,6 +63,12 @@ namespace SharpKatz
             OSVersionHelper osHelper = new OSVersionHelper();
             osHelper.PrintOSVersion();
 
+            if(osHelper.build <= 9600)
+            {
+                Console.WriteLine("Unsupported OS Version");
+                return;
+            }
+
             IntPtr lsasrv = IntPtr.Zero;
             IntPtr wdigest = IntPtr.Zero;
             IntPtr lsassmsv1 = IntPtr.Zero;

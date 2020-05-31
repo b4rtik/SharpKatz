@@ -49,7 +49,7 @@ namespace SharpKatz.Module
         public static unsafe int FindCredentials(IntPtr hLsass, IntPtr lsasrvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
 
-            uint logonSessionListSignOffset, logonSessionListOffset, logonSessionListCountOffset;
+            uint logonSessionListSignOffset;
             IntPtr logonSessionListAddr;
             int logonSessionListCount; //*DWORD
 

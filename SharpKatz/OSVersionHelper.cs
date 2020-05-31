@@ -94,7 +94,7 @@ namespace SharpKatz
 
         UInt32 major = 0;
         UInt32 minor = 0;
-        UInt32 build = 0;
+        public UInt32 build { get; set; }
 
         IWinBuild winbuild;
 
@@ -111,9 +111,9 @@ namespace SharpKatz
 
         public OSVersionHelper()
         {
-
-            Natives.RtlGetNtVersionNumbers(out major, out minor, out build);
-            build = (build & 0x00007fff);
+            UInt32 locbuild = 0;
+            Natives.RtlGetNtVersionNumbers(out major, out minor, out locbuild);
+            build = (locbuild & 0x00007fff);
 
             winbuild = GetWinBuild();
 
@@ -172,7 +172,6 @@ namespace SharpKatz
         {
 
             var selection = winbuilds.Select((lbuild, index) => new { lbuild, index }).Where(x => x.lbuild.build <= build).Max(x => x.index);
-            //Console.WriteLine("[*] index {0}", selection);
             return winbuilds[selection];
 
         }
