@@ -9,14 +9,14 @@ namespace SharpKatz
     class OSVersionHelper
     {
 
-        int KULL_M_WIN_BUILD_BLUE = 9600;
+        //int KULL_M_WIN_BUILD_BLUE = 9600;
         static public int KULL_M_WIN_BUILD_10_1507 = 10240;
         static public int KULL_M_WIN_BUILD_10_1511 = 10586;
         static public int KULL_M_WIN_BUILD_10_1607 = 14393;
         static public int KULL_M_WIN_BUILD_10_1703 = 15063;
-        int KULL_M_WIN_BUILD_10_1709 = 16299;
+        //int KULL_M_WIN_BUILD_10_1709 = 16299;
         static public int KULL_M_WIN_BUILD_10_1803 = 17134;
-        int KULL_M_WIN_BUILD_10_1809 = 17763;
+        //int KULL_M_WIN_BUILD_10_1809 = 17763;
         static public int KULL_M_WIN_BUILD_10_1903 = 18362;
         static public int KULL_M_WIN_BUILD_10_2004 = 19041;
 
@@ -151,12 +151,21 @@ namespace SharpKatz
 
         public void PrintOSVersion()
         {
-            Console.WriteLine("[*] Platform {0}", System.Environment.OSVersion.Platform);
-            Console.WriteLine("[*] Major {0}", major);
-            Console.WriteLine("[*] Minor {0}", minor);
-            Console.WriteLine("[*] Build {0}", build);
-            Console.WriteLine("[*] Version {0}", System.Environment.OSVersion.VersionString);
-            Console.WriteLine("[*] ServicePack {0}", System.Environment.OSVersion.ServicePack);
+            Console.WriteLine("[*]");
+            Console.WriteLine("[*] \t\t\tSystem Information");
+            Console.WriteLine("[*] {0}", new string('-', 70));
+            Console.WriteLine("[*] | Platform: {0,-57}|", System.Environment.OSVersion.Platform);
+            Console.WriteLine("[*] {0}", new string('-', 70));
+            Console.WriteLine("[*] | Major: {0,-14}| Minor: {1,-14}| Build: {2,-14}|", major, minor, build);
+            Console.WriteLine("[*] {0}", new string('-', 70));
+            Console.WriteLine("[*] | Version: {0,-58}|", System.Environment.OSVersion.VersionString);
+            Console.WriteLine("[*] {0}", new string('-', 70));
+            if (!string.IsNullOrEmpty(System.Environment.OSVersion.ServicePack))
+            {
+                Console.WriteLine("[*] | ServicePack: {0,-44}|", System.Environment.OSVersion.ServicePack);
+                Console.WriteLine("[*] {0}", new string('-', 70));
+            }
+            Console.WriteLine("[*]");
         }
 
         private IWinBuild GetWinBuild()

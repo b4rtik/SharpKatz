@@ -12,9 +12,7 @@ namespace SharpKatz.Module
 {
     class Msv1
     {
-
-        static long max_search_size = 580000;
-
+        
         [StructLayout(LayoutKind.Sequential)]
         public struct LIST_ENTRY
         {

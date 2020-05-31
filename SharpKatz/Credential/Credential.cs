@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 using static SharpKatz.Natives;
 
 namespace SharpKatz.Credential
@@ -19,7 +19,6 @@ namespace SharpKatz.Credential
         public Msv Msv{ get; set; }
         public WDigest Wdigest { get; set; }
         public List<Ssp> Ssp { get; set; }
-        public List<LiveSsp> LiveSsp { get; set; }
         public Tspkg Tspkg { get; set; }
         public Kerberos Kerberos { get; set; }
         public List<CredMan> Credman { get; set; }
@@ -90,17 +89,6 @@ namespace SharpKatz.Credential
         public string Password { get; set; }
 
         public CredMan()
-        {
-        }
-    }
-
-    class LiveSsp
-    {
-        public string DomainName { get; set; }
-        public string UserName { get; set; }
-        public string Password { get; set; }
-
-        public LiveSsp()
         {
         }
     }

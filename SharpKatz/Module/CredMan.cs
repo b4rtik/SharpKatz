@@ -66,8 +66,6 @@ namespace SharpKatz.Module
                 IntPtr credmanMem = logon.pCredentialManager;
                 LUID luid = logon.LogonId;
 
-                KIWI_CREDMAN_SET_LIST_ENTRY credmanset;
-                KIWI_CREDMAN_LIST_STARTER credmanstarter;
                 IntPtr llCurrent;
                 int reference = 1;
 

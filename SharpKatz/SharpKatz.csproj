@@ -60,7 +60,6 @@
     <Compile Include="Module\CredMan.cs" />
     <Compile Include="Module\LogonSessions.cs" />
     <Compile Include="Module\Tspkg.cs" />
-    <Compile Include="Module\LiveSsp.cs" />
     <Compile Include="Module\Kerberos.cs" />
     <Compile Include="Module\Ssp.cs" />
     <Compile Include="WinBuild\IWinBuild.cs" />

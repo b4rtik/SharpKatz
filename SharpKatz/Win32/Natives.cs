@@ -147,13 +147,11 @@ namespace SharpKatz
             public byte wReserved;
         }
 
-
-
         [StructLayout(LayoutKind.Sequential)]
         public struct LARGE_INTEGER
         {
-            public UInt32 LowPart;
-            public UInt32 HighPart;
+            public int LowPart;
+            public int HighPart;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -1491,5 +1489,7 @@ namespace SharpKatz
         {
             return CustomLoadLibrary.GetDllAddress(name, true);
         }
+        
+
     }
 }

