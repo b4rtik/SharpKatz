@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace SharpKatz
+namespace SharpKatz.Win32
 {
     public class CustomLoadLibrary
     {

@@ -5,9 +5,9 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Security;
 using System.Text;
-using static SharpKatz.Natives;
+using static SharpKatz.Win32.Natives;
 
-namespace SharpKatz
+namespace SharpKatz.Win32
 {
     class SysCall
     {

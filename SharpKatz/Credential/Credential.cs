@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
-using static SharpKatz.Natives;
+using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz.Credential
 {

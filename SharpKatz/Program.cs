@@ -1,5 +1,6 @@
 ﻿using NDesk.Options;
 using SharpKatz.Credential;
+using SharpKatz.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;

@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace SharpKatz
+namespace SharpKatz.Win32
 {
     class Natives
     {

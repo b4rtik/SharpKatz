@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
-using static SharpKatz.Natives;
+using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz.Module
 {
@@ -27,17 +27,17 @@ namespace SharpKatz.Module
             public IntPtr Flink; //KIWI_CREDMAN_LIST_ENTRY
             public IntPtr Blink; //KIWI_CREDMAN_LIST_ENTRY
             public Msv1.LIST_ENTRY unk4;
-            public Natives.UNICODE_STRING type;
+            public UNICODE_STRING type;
             public IntPtr unk5;
-            public Natives.UNICODE_STRING server1;
+            public UNICODE_STRING server1;
             public IntPtr unk6;
             public IntPtr unk7;
             public IntPtr unk8;
             public IntPtr unk9;
             public IntPtr unk10;
-            public Natives.UNICODE_STRING user;
+            public UNICODE_STRING user;
             public uint unk11;
-            public Natives.UNICODE_STRING server2;
+            public UNICODE_STRING server2;
         }
 
 

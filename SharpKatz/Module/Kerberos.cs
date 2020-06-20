@@ -7,8 +7,8 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using static SharpKatz.Module.Msv1;
-using static SharpKatz.Natives;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
+using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz.Module
 {
@@ -216,7 +216,7 @@ namespace SharpKatz.Module
         [StructLayout(LayoutKind.Sequential)]
         public struct KERB_HASHPASSWORD_6_1607
         {
-            Natives.UNICODE_STRING salt;    // http://tools.ietf.org/html/rfc3962
+            UNICODE_STRING salt;    // http://tools.ietf.org/html/rfc3962
             IntPtr stringToKey; // AES Iterations (dword ?)
             IntPtr unk0;
             KERB_HASHPASSWORD_GENERIC generic;

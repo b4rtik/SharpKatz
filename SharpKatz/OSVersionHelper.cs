@@ -3,6 +3,7 @@ using System;
 using System.Linq;
 using System.Reflection;
 using static SharpKatz.Module.Msv1;
+using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz
 {
@@ -112,7 +113,7 @@ namespace SharpKatz
         public OSVersionHelper()
         {
             UInt32 locbuild = 0;
-            Natives.RtlGetNtVersionNumbers(out major, out minor, out locbuild);
+            RtlGetNtVersionNumbers(out major, out minor, out locbuild);
             build = (locbuild & 0x00007fff);
 
             winbuild = GetWinBuild();
