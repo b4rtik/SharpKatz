@@ -1,6 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -869,11 +868,12 @@ namespace SharpKatz
         }
 
         [StructLayout(LayoutKind.Sequential, Pack = 4)]
-        public unsafe struct MINIDUMP_THREAD_CALLBACK
+        public struct MINIDUMP_THREAD_CALLBACK
         {
             public uint ThreadId;
             public IntPtr ThreadHandle;
-            public fixed byte Context[1232];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1232)]
+            public byte[] Context;
             public uint SizeOfContext;
             public ulong StackBase;
             public ulong StackEnd;
@@ -1296,6 +1296,403 @@ namespace SharpKatz
             public ulong LastExceptionFromRip;
         }
 
+        public enum SID_NAME_USE
+        {
+            SidTypeUser = 1,
+            SidTypeGroup,
+            SidTypeDomain,
+            SidTypeAlias,
+            SidTypeWellKnownGroup,
+            SidTypeDeletedAccount,
+            SidTypeInvalid,
+            SidTypeUnknown,
+            SidTypeComputer
+        }
+
+        [Flags()]
+        public enum UserAccountControl : int
+        {
+            SCRIPT = 0x00000001,
+            ACCOUNTDISABLE = 0x00000002,
+            HOMEDIR_REQUIRED = 0x00000008,
+            LOCKOUT = 0x00000010,
+            PASSWD_NOTREQD = 0x00000020,
+            PASSWD_CANT_CHANGE = 0x00000040,
+            ENCRYPTED_TEXT_PASSWORD_ALLOWED = 0x00000080,
+            TEMP_DUPLICATE_ACCOUNT = 0x00000100,
+            NORMAL_ACCOUNT = 0x00000200,
+            INTERDOMAIN_TRUST_ACCOUNT = 0x00000800,
+            WORKSTATION_TRUST_ACCOUNT = 0x00001000,
+            SERVER_TRUST_ACCOUNT = 0x00002000,
+            Unused1 = 0x00004000,
+            Unused2 = 0x00008000,
+            DONT_EXPIRE_PASSWD = 0x00010000,
+            MNS_LOGON_ACCOUNT = 0x00020000,
+            SMARTCARD_REQUIRED = 0x00040000,
+            TRUSTED_FOR_DELEGATION = 0x00080000,
+            NOT_DELEGATED = 0x00100000,
+            USE_DES_KEY_ONLY = 0x00200000,
+            DONT_REQUIRE_PREAUTH = 0x00400000,
+            PASSWORD_EXPIRED = 0x00800000,
+            TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION = 0x01000000,
+            PARTIAL_SECRETS_ACCOUNT = 0x04000000,
+            USE_AES_KEYS = 0x08000000
+        }
+
+        [Flags()]
+        public enum SamAccountType : uint
+        {
+            DOMAIN_OBJECT = 0x00000000,
+            GROUP_OBJECT = 0x10000000,
+            NON_SECURITY_GROUP_OBJECT = 0x10000001,
+            ALIAS_OBJECT = 0x20000000,
+            NON_SECURITY_ALIAS_OBJECT = 0x20000001,
+            USER_OBJECT = 0x30000000,
+            MACHINE_ACCOUNT = 0x30000001,
+            TRUST_ACCOUNT = 0x30000002,
+            APP_BASIC_GROUP = 0x40000000,
+            APP_QUERY_GROUP = 0x40000001
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct USER_PROPERTIES
+        {
+            public uint Reserved1;
+            public uint Length;
+            public ushort Reserved2;
+            public ushort Reserved3;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 96)]
+            public byte[] Reserved4;
+            public char PropertySignature;
+            public ushort PropertyCount;
+            public USER_PROPERTY[] UserProperties;
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 2)]
+        public struct USER_PROPERTY
+        {
+            public ushort NameLength;
+            public ushort ValueLength;
+            public ushort Reserved;
+            public string PropertyName;
+            // PropertyValue in HEX !
+        }
+
+        //DCSync author LE TOUX (vincent.letoux@mysmartlogon.com)
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RPC_SECURITY_QOS
+        {
+            public uint Version;
+            public uint Capabilities;
+            public uint IdentityTracking;
+            public uint ImpersonationType;
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SecPkgContext_SessionKey
+        {
+            public uint SessionKeyLength;
+            public IntPtr SessionKey;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct CRYPTO_BUFFER
+        {
+            public uint Length;
+            public uint MaximumLength;
+            public IntPtr Buffer;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct COMM_FAULT_OFFSETS
+        {
+            public short CommOffset;
+            public short FaultOffset;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct GENERIC_BINDING_ROUTINE_PAIR
+        {
+            public IntPtr Bind;
+            public IntPtr Unbind;
+        }
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RPC_VERSION
+        {
+            public ushort MajorVersion;
+            public ushort MinorVersion;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RPC_SYNTAX_IDENTIFIER
+        {
+            public Guid SyntaxGUID;
+            public RPC_VERSION SyntaxVersion;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RPC_CLIENT_INTERFACE
+        {
+            public uint Length;
+            public RPC_SYNTAX_IDENTIFIER InterfaceId;
+            public RPC_SYNTAX_IDENTIFIER TransferSyntax;
+            public IntPtr DispatchTable;  //PRPC_DISPATCH_TABLE
+            public uint RpcProtseqEndpointCount;
+            public IntPtr RpcProtseqEndpoint; //PRPC_PROTSEQ_ENDPOINT
+            public IntPtr Reserved;
+            public IntPtr InterpreterInfo;
+            public uint Flags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MIDL_STUB_DESC
+        {
+            public IntPtr /*RPC_CLIENT_INTERFACE*/ RpcInterfaceInformation;
+            public IntPtr pfnAllocate;
+            public IntPtr pfnFree;
+            public IntPtr pAutoBindHandle;
+            public IntPtr /*NDR_RUNDOWN*/ apfnNdrRundownRoutines;
+            public IntPtr /*GENERIC_BINDING_ROUTINE_PAIR*/ aGenericBindingRoutinePairs;
+            public IntPtr /*EXPR_EVAL*/ apfnExprEval;
+            public IntPtr /*XMIT_ROUTINE_QUINTUPLE*/ aXmitQuintuple;
+            public IntPtr pFormatTypes;
+            public int fCheckBounds;
+            /* Ndr library version. */
+            public uint Version;
+            public IntPtr /*MALLOC_FREE_STRUCT*/ pMallocFreeStruct;
+            public int MIDLVersion;
+            public IntPtr CommFaultOffsets;
+            // New fields for version 3.0+
+            public IntPtr /*USER_MARSHAL_ROUTINE_QUADRUPLE*/ aUserMarshalQuadruple;
+            // Notify routines - added for NT5, MIDL 5.0
+            public IntPtr /*NDR_NOTIFY_ROUTINE*/ NotifyRoutineTable;
+            public IntPtr mFlags;
+            // International support routines - added for 64bit post NT5
+            public IntPtr /*NDR_CS_ROUTINES*/ CsRoutineTables;
+            public IntPtr ProxyServerInfo;
+            public IntPtr /*NDR_EXPR_DESC*/ pExprInfo;
+            // Fields up to now present in win2000 release.
+        }
+
+        #region RPC structures
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DRS_EXTENSIONS_INT
+        {
+            public UInt32 cb;
+            public UInt32 dwFlags;
+            public Guid SiteObjGuid;
+            public UInt32 Pid;
+            public UInt32 dwReplEpoch;
+            public UInt32 dwFlagsExt;
+            public Guid ConfigObjGUID;
+            public UInt32 dwExtCaps;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DRS_MSG_DCINFOREQ_V1
+        {
+            public IntPtr Domain;
+            public UInt32 InfoLevel;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DRS_MSG_DCINFOREPLY_V2
+        {
+            public UInt32 cItems;
+            public IntPtr rItems;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DS_DOMAIN_CONTROLLER_INFO_2W
+        {
+            public IntPtr NetbiosName;
+            public IntPtr DnsHostName;
+            public IntPtr SiteName;
+            public IntPtr SiteObjectName;
+            public IntPtr ComputerObjectName;
+            public IntPtr ServerObjectName;
+            public IntPtr NtdsDsaObjectName;
+            public UInt32 fIsPdc;
+            public UInt32 fDsEnabled;
+            public UInt32 fIsGc;
+            public Guid SiteObjectGuid;
+            public Guid ComputerObjectGuid;
+            public Guid ServerObjectGuid;
+            public Guid NtdsDsaObjectGuid;
+        }
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct USN_VECTOR
+        {
+            public long usnHighObjUpdate;
+            public long usnReserved;
+            public long usnHighPropUpdate;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct SCHEMA_PREFIX_TABLE
+        {
+            public UInt32 PrefixCount;
+            public IntPtr pPrefixEntry;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DSNAME
+        {
+            public UInt32 structLen;
+            public UInt32 SidLen;
+            public Guid Guid;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 28)]
+            public byte[] Sid;
+            public UInt32 NameLen;
+            public byte StringName;
+        };
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DRS_MSG_GETCHGREQ_V8
+        {
+            public Guid uuidDsaObjDest;
+            public Guid uuidInvocIdSrc;
+            public IntPtr pNC;
+            public USN_VECTOR usnvecFrom;
+            public IntPtr pUpToDateVecDest;
+            public UInt32 ulFlags;
+            public UInt32 cMaxObjects;
+            public UInt32 cMaxBytes;
+            public UInt32 ulExtendedOp;
+            public ulong liFsmoInfo;
+            public IntPtr pPartialAttrSet;
+            public IntPtr pPartialAttrSetEx;
+            public SCHEMA_PREFIX_TABLE PrefixTableDest;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DRS_MSG_GETCHGREPLY_V6
+        {
+            public Guid uuidDsaObjSrc;
+            public Guid uuidInvocIdSrc;
+            public IntPtr pNC;
+            public USN_VECTOR usnvecFrom;
+            public USN_VECTOR usnvecTo;
+            public IntPtr pUpToDateVecSrc;
+            public SCHEMA_PREFIX_TABLE PrefixTableSrc;
+            public UInt32 ulExtendedRet;
+            public UInt32 cNumObjects;
+            public UInt32 cNumBytes;
+            public IntPtr pObjects;
+            public UInt32 fMoreData;
+            public UInt32 cNumNcSizeObjects;
+            public UInt32 cNumNcSizeValues;
+            public UInt32 cNumValues;
+            public IntPtr rgValues;
+            public UInt32 dwDRSError;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DRS_MSG_CRACKREQ_V1
+        {
+            public UInt32 CodePage;
+            public UInt32 LocaleId;
+            public UInt32 dwFlags;
+            public UInt32 formatOffered;
+            public UInt32 formatDesired;
+            public UInt32 cNames;
+            public IntPtr rpNames;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct DS_NAME_RESULT_ITEMW
+        {
+            public UInt32 status;
+            public IntPtr pDomain;
+            public IntPtr pName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DS_NAME_RESULTW
+        {
+            public UInt32 cItems;
+            public IntPtr rItems;
+        }
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ATTRVAL
+        {
+            public UInt32 valLen;
+            public IntPtr pVal;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ATTRVALBLOCK
+        {
+            public UInt32 valCount;
+            public IntPtr pAVal;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ATTR
+        {
+            public UInt32 attrTyp;
+            public ATTRVALBLOCK AttrVal;
+        }
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ATTRBLOCK
+        {
+            public UInt32 attrCount;
+            public IntPtr pAttr;
+        }
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ENTINF
+        {
+            public IntPtr pName;
+            public UInt32 ulFlags;
+            public ATTRBLOCK AttrBlock;
+        };
+        [StructLayout(LayoutKind.Sequential)]
+        public struct REPLENTINFLIST
+        {
+            public IntPtr pNextEntInf;
+            public ENTINF Entinf;
+            public UInt32 fIsNCPrefix;
+            public IntPtr pParentGuid;
+            public IntPtr pMetaDataExt;
+        }
+
+        public enum ATT
+        {
+            [Description("displayName")]
+            ATT_RDN = 589825,
+            ATT_OBJECT_SID = 589970,
+            ATT_WHEN_CREATED = 131074,
+            ATT_WHEN_CHANGED = 131075,
+
+            ATT_SAM_ACCOUNT_NAME = 590045,
+            ATT_USER_PRINCIPAL_NAME = 590480,
+            ATT_SERVICE_PRINCIPAL_NAME = 590595,
+            ATT_SID_HISTORY = 590433,
+            ATT_USER_ACCOUNT_CONTROL = 589832,
+            ATT_SAM_ACCOUNT_TYPE = 590126,
+            ATT_LOGON_HOURS = 589888,
+            ATT_LOGON_WORKSTATION = 589889,
+            [Description("lastLogon")]
+            ATT_LAST_LOGON = 589876,
+            ATT_PWD_LAST_SET = 589920,
+            ATT_ACCOUNT_EXPIRES = 589983,
+            ATT_LOCKOUT_TIME = 590486,
+
+            ATT_UNICODE_PWD = 589914,
+            ATT_NT_PWD_HISTORY = 589918,
+            ATT_DBCS_PWD = 589879,
+            ATT_LM_PWD_HISTORY = 589984,
+            ATT_SUPPLEMENTAL_CREDENTIALS = 589949,
+        }
+        #endregion
 
         public static IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId)
         {
@@ -1325,14 +1722,6 @@ namespace SharpKatz
 
         }
 
-
-        public static int NtFilterToken(IntPtr TokenHandle, uint Flags, IntPtr SidsToDisable, IntPtr PrivilegesToDelete, IntPtr RestrictedSids, ref IntPtr hToken)
-        {
-            IntPtr proc = GetProcAddress(GetNtDll(), "NtFilterToken");
-            SysCall.Delegates.NtFilterToken NtSetInformationToken = (SysCall.Delegates.NtFilterToken)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NtFilterToken));
-            return NtFilterToken(TokenHandle, Flags, SidsToDisable, PrivilegesToDelete, RestrictedSids, ref hToken);
-        }
-
         private static IntPtr GetKernel32()
         {
 
@@ -1354,10 +1743,38 @@ namespace SharpKatz
 
         }
 
+        private static IntPtr GetCryptsp()
+        {
+
+            return LoadLibrary("CRYPTSP.DLL");
+
+        }
+
         private static IntPtr GetDbgcore()
         {
 
             return LoadLibrary("dbgcore.dll");
+
+        }
+
+        public static IntPtr GetRpcrt4()
+        {
+
+            return LoadLibrary("RPCRT4.dll");
+
+        }
+
+        private static IntPtr GetSecur32()
+        {
+
+            return LoadLibrary("secur32.Dll");
+
+        }
+
+        private static IntPtr GetSspicli()
+        {
+
+            return LoadLibrary("SSPICLI.DLL");
 
         }
 
@@ -1373,6 +1790,13 @@ namespace SharpKatz
             IntPtr proc = GetProcAddress(GetKernel32(), "CloseHandle");
             SysCall.Delegates.CloseHandle CloseHandle = (SysCall.Delegates.CloseHandle)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CloseHandle));
             return CloseHandle(handle);
+        }
+
+        public static int NtFilterToken(IntPtr TokenHandle, uint Flags, IntPtr SidsToDisable, IntPtr PrivilegesToDelete, IntPtr RestrictedSids, ref IntPtr hToken)
+        {
+            IntPtr proc = GetProcAddress(GetNtDll(), "NtFilterToken");
+            SysCall.Delegates.NtFilterToken NtSetInformationToken = (SysCall.Delegates.NtFilterToken)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NtFilterToken));
+            return NtFilterToken(TokenHandle, Flags, SidsToDisable, PrivilegesToDelete, RestrictedSids, ref hToken);
         }
 
         public static bool UpdateProcThreadAttribute(IntPtr lpAttributeList, uint dwFlags, IntPtr Attribute, IntPtr lpValue, IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize)
@@ -1410,13 +1834,6 @@ namespace SharpKatz
             return VirtualProtect(lpAddress, dwSize, flNewProtect, out lpflOldProtect);
         }
 
-        public static bool VirtualProtectEx(IntPtr hProcess, IntPtr lpAddress, IntPtr dwSize, uint newprotect, out uint oldprotect)
-        {
-            IntPtr proc = GetProcAddress(GetKernelbase(), "VirtualProtectEx");
-            SysCall.Delegates.VirtualProtectEx VirtualProtectEx = (SysCall.Delegates.VirtualProtectEx)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.VirtualProtectEx));
-            return VirtualProtectEx(hProcess, lpAddress, dwSize, newprotect, out oldprotect);
-        }
-
         public static UInt32 LdrLoadDll(IntPtr PathToFile, UInt32 dwFlags, ref Natives.UNICODE_STRING ModuleFileName, ref IntPtr ModuleHandle)
         {
             IntPtr proc = GetProcAddress(GetNtDll(), "LdrLoadDll");
@@ -1445,13 +1862,6 @@ namespace SharpKatz
             return OpenProcessToken(hProcess, dwDesiredAccess, out hToken);
         }
 
-        public static bool MiniDumpWriteDump(IntPtr hProcess, uint ProcessId, Microsoft.Win32.SafeHandles.SafeFileHandle hFile, int DumpType, IntPtr ExceptionParam, IntPtr UserStreamParam, IntPtr CallbackParam)
-        {
-            IntPtr proc = GetProcAddress(GetDbgcore(), "MiniDumpWriteDump");
-            SysCall.Delegates.MiniDumpWriteDump MiniDumpWriteDump = (SysCall.Delegates.MiniDumpWriteDump)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.MiniDumpWriteDump));
-            return MiniDumpWriteDump(hProcess, ProcessId, hFile, DumpType, ExceptionParam, UserStreamParam, CallbackParam);
-        }
-
         public static bool LookupPrivilegeValue(String lpSystemName, String lpName, ref LUID luid)
         {
             IntPtr proc = GetProcAddress(GetAdvapi32(), "LookupPrivilegeValueA");
@@ -1466,11 +1876,11 @@ namespace SharpKatz
             return AdjustTokenPrivileges(TokenHandle, DisableAllPrivileges, ref NewState, BufferLengthInBytes, ref PreviousState, out ReturnLengthInBytes);
         }
 
-        public static int PssCaptureSnapshot(IntPtr ProcessHandle, PSS_CAPTURE_FLAGS CaptureFlags, int ThreadContextFlags, ref IntPtr SnapshotHandle)
+        public static bool LookupAccountName( string lpSystemName, string lpAccountName, byte[] Sid, ref uint cbSid, StringBuilder ReferencedDomainName, ref uint cchReferencedDomainName, out SID_NAME_USE peUse)
         {
-            IntPtr proc = GetProcAddress(GetKernel32(), "PssCaptureSnapshot");
-            SysCall.Delegates.PssCaptureSnapshot PssCaptureSnapshot = (SysCall.Delegates.PssCaptureSnapshot)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.PssCaptureSnapshot));
-            return PssCaptureSnapshot(ProcessHandle, CaptureFlags, ThreadContextFlags, ref SnapshotHandle);
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "LookupAccountNameA");
+            SysCall.Delegates.LookupAccountNameA LookupAccountNameA = (SysCall.Delegates.LookupAccountNameA)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.LookupAccountNameA));
+            return LookupAccountNameA( lpSystemName,  lpAccountName, Sid, ref  cbSid,  ReferencedDomainName, ref  cchReferencedDomainName, out  peUse);
         }
 
         public static bool ConvertSidToStringSid(byte[] pSID, out string ptrSid)
@@ -1480,16 +1890,132 @@ namespace SharpKatz
             return ConvertSidToStringSid(pSID, out ptrSid);
         }
 
+        public static int RpcStringBindingCompose(String ObjUuid, String ProtSeq, String NetworkAddr, String Endpoint, String Options, out IntPtr lpBindingString)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "RpcStringBindingComposeW");
+            SysCall.Delegates.RpcStringBindingCompose RpcStringBindingCompose = (SysCall.Delegates.RpcStringBindingCompose)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcStringBindingCompose));
+            return RpcStringBindingCompose(ObjUuid, ProtSeq, NetworkAddr, Endpoint, Options, out lpBindingString);
+        }
+
+        public static int RpcBindingFromStringBinding(string bindingString, out IntPtr lpBinding)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "RpcBindingFromStringBindingW");
+            SysCall.Delegates.RpcBindingFromStringBinding RpcBindingFromStringBinding = (SysCall.Delegates.RpcBindingFromStringBinding)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcBindingFromStringBinding));
+            return RpcBindingFromStringBinding(bindingString, out lpBinding);
+        }
+
+        public static IntPtr NdrClientCall2_1(IntPtr pMIDL_STUB_DESC, IntPtr formatString, ref IntPtr hDrs)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+            SysCall.Delegates.NdrClientCall2_1 NdrClientCall2_1 = (SysCall.Delegates.NdrClientCall2_1)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NdrClientCall2_1));
+            return NdrClientCall2_1(pMIDL_STUB_DESC, formatString, ref hDrs);
+
+        }
+
+        public static IntPtr NdrClientCall2_2(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr hBinding, Guid NtdsDsaObjectGuid, DRS_EXTENSIONS_INT ext_int, ref IntPtr pDrsExtensionsExt, ref IntPtr hDrs)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+            SysCall.Delegates.NdrClientCall2_2 NdrClientCall2_2 = (SysCall.Delegates.NdrClientCall2_2)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NdrClientCall2_2));
+            return NdrClientCall2_2(pMIDL_STUB_DESC, formatString, hBinding, NtdsDsaObjectGuid, ext_int, ref pDrsExtensionsExt, ref hDrs);
+
+        }
+
+        public static IntPtr NdrClientCall2_3(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr hDrs, uint dcInVersion, DRS_MSG_DCINFOREQ_V1 dcInfoReq, ref uint dcOutVersion, ref DRS_MSG_DCINFOREPLY_V2 dcInfoRep)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+            SysCall.Delegates.NdrClientCall2_3 NdrClientCall2_3 = (SysCall.Delegates.NdrClientCall2_3)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NdrClientCall2_3));
+            return NdrClientCall2_3(pMIDL_STUB_DESC, formatString, hDrs, dcInVersion, dcInfoReq, ref dcOutVersion, ref dcInfoRep);
+
+        }
+
+        public static IntPtr NdrClientCall2_4(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr hDrs, uint dcInVersion, DRS_MSG_CRACKREQ_V1 dcInfoReq, ref uint dcOutVersion, ref IntPtr dcInfoRep)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+            SysCall.Delegates.NdrClientCall2_4 NdrClientCall2_4 = (SysCall.Delegates.NdrClientCall2_4)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NdrClientCall2_4));
+            return NdrClientCall2_4(pMIDL_STUB_DESC, formatString, hDrs, dcInVersion, dcInfoReq, ref dcOutVersion, ref dcInfoRep);
+
+        }
+
+        public static IntPtr NdrClientCall2_5(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr hDrs, uint dwInVersion, DRS_MSG_GETCHGREQ_V8 pmsgIn, ref uint dwOutVersion, ref DRS_MSG_GETCHGREPLY_V6 pmsgOut)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+            SysCall.Delegates.NdrClientCall2_5 NdrClientCall2_5 = (SysCall.Delegates.NdrClientCall2_5)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NdrClientCall2_5));
+            return NdrClientCall2_5(pMIDL_STUB_DESC, formatString, hDrs, dwInVersion, pmsgIn, ref dwOutVersion, ref pmsgOut);
+
+        }
+
+        public static int I_RpcBindingInqSecurityContext(IntPtr Binding, out IntPtr SecurityContextHandle)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "I_RpcBindingInqSecurityContext");
+            SysCall.Delegates.I_RpcBindingInqSecurityContext I_RpcBindingInqSecurityContext = (SysCall.Delegates.I_RpcBindingInqSecurityContext)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.I_RpcBindingInqSecurityContext));
+            return I_RpcBindingInqSecurityContext(Binding, out SecurityContextHandle);
+        }
+
+        public static int RpcBindingFree(ref IntPtr lpString)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "RpcBindingFree");
+            SysCall.Delegates.RpcBindingFree RpcBindingFree = (SysCall.Delegates.RpcBindingFree)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcBindingFree));
+            return RpcBindingFree(ref lpString);
+        }
+
+        public static int RpcBindingSetAuthInfoEx(IntPtr lpBinding, string ServerPrincName, UInt32 AuthnLevel, UInt32 AuthnSvc, IntPtr identity, UInt32 AuthzSvc, ref RPC_SECURITY_QOS SecurityQOS)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "RpcBindingSetAuthInfoExW");
+            SysCall.Delegates.RpcBindingSetAuthInfoEx RpcBindingSetAuthInfoEx = (SysCall.Delegates.RpcBindingSetAuthInfoEx)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcBindingSetAuthInfoEx));
+            return RpcBindingSetAuthInfoEx(lpBinding, ServerPrincName, AuthnLevel, AuthnSvc, identity, AuthzSvc, ref SecurityQOS);
+        }
+
+        public static int RpcBindingSetOption(IntPtr Binding, UInt32 Option, IntPtr OptionValue)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "RpcBindingSetOption");
+            SysCall.Delegates.RpcBindingSetOption RpcBindingSetOption = (SysCall.Delegates.RpcBindingSetOption)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcBindingSetOption));
+            return RpcBindingSetOption(Binding, Option, OptionValue);
+        }
+
+
+        public static int RtlDecryptDES2blocks1DWORD(byte[] data, ref UInt32 key, IntPtr output)
+        {
+            IntPtr proc = GetProcAddress(GetCryptsp(), "SystemFunction027");
+            SysCall.Delegates.RtlDecryptDES2blocks1DWORD RtlDecryptDES2blocks1DWORD = (SysCall.Delegates.RtlDecryptDES2blocks1DWORD)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RtlDecryptDES2blocks1DWORD));
+            return RtlDecryptDES2blocks1DWORD(data, ref key, output);
+        }
+
+        public static IntPtr GetSidSubAuthority(IntPtr sid, UInt32 subAuthorityIndex)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "GetSidSubAuthority");
+            SysCall.Delegates.GetSidSubAuthority GetSidSubAuthority = (SysCall.Delegates.GetSidSubAuthority)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.GetSidSubAuthority));
+            return GetSidSubAuthority(sid, subAuthorityIndex);
+        }
+
+        public static IntPtr GetSidSubAuthorityCount(IntPtr psid)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "GetSidSubAuthorityCount");
+            SysCall.Delegates.GetSidSubAuthorityCount GetSidSubAuthorityCount = (SysCall.Delegates.GetSidSubAuthorityCount)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.GetSidSubAuthorityCount));
+            return GetSidSubAuthorityCount(psid);
+        }
+
+        public static int RtlEncryptDecryptRC4(ref CRYPTO_BUFFER data, ref CRYPTO_BUFFER key)
+        {
+            IntPtr proc = GetProcAddress(GetCryptsp(), "SystemFunction032");
+            SysCall.Delegates.RtlEncryptDecryptRC4 RtlEncryptDecryptRC4 = (SysCall.Delegates.RtlEncryptDecryptRC4)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RtlEncryptDecryptRC4));
+            return RtlEncryptDecryptRC4(ref data, ref key);
+        }
+
+        public static int QueryContextAttributes(IntPtr hContext, uint ulAttribute, ref SecPkgContext_SessionKey pContextAttributes)
+        {
+            IntPtr proc = GetProcAddress(GetSspicli(), "QueryContextAttributesA");
+            SysCall.Delegates.QueryContextAttributes QueryContextAttributes = (SysCall.Delegates.QueryContextAttributes)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.QueryContextAttributes));
+            return QueryContextAttributes(hContext, ulAttribute, ref pContextAttributes);
+        }
+
         public static IntPtr GetProcAddress(IntPtr hModule, string procName)
         {
             return CustomLoadLibrary.GetExportAddress(hModule, procName);
         }
 
-        public static IntPtr LoadLibrary(string name)
+        public static IntPtr LoadLibrary(string name, bool conloadfromdisk = true)
         {
-            return CustomLoadLibrary.GetDllAddress(name, true);
+            return CustomLoadLibrary.GetDllAddress(name, conloadfromdisk);
         }
-        
-
     }
 }

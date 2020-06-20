@@ -135,8 +135,8 @@ namespace SharpKatz
                 // Loop the array of export name RVA's
                 for (int i = 0; i < NumberOfNames; i++)
                 {
-                    String FunctionName = Marshal.PtrToStringAnsi((IntPtr)(ModuleBase.ToInt64() + Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + NamesRVA + i * 4))));
-                    if (FunctionName.ToLower() == ExportName.ToLower())
+                    string FunctionName = Marshal.PtrToStringAnsi((IntPtr)(ModuleBase.ToInt64() + Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + NamesRVA + i * 4))));
+                    if (FunctionName.Equals(ExportName, StringComparison.OrdinalIgnoreCase))
                     {
                         Int32 FunctionOrdinal = Marshal.ReadInt16((IntPtr)(ModuleBase.ToInt64() + OrdinalsRVA + i * 2)) + OrdinalBase;
                         Int32 FunctionRVA = Marshal.ReadInt32((IntPtr)(ModuleBase.ToInt64() + FunctionsRVA + (4 * (FunctionOrdinal - OrdinalBase))));

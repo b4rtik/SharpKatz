@@ -1,5 +1,6 @@
 ﻿using SharpKatz.Module;
 using System;
+using System.Runtime.InteropServices;
 
 namespace SharpKatz.WinBuild
 {
@@ -41,14 +42,14 @@ namespace SharpKatz.WinBuild
         byte[] PTRN_WN6x_LogonSessionList = { 0x33, 0xff, 0x41, 0x89, 0x37, 0x4c, 0x8b, 0xf3, 0x45, 0x85, 0xc0, 0x74 };
         byte[] keyIVSigAll = { 0x83, 0x64, 0x24, 0x30, 0x00, 0x48, 0x8d, 0x45, 0xe0, 0x44, 0x8b, 0x4d, 0xd8, 0x48, 0x8d, 0x15 };
 
-        public unsafe WinBuild1511()
+        public WinBuild1511()
         {
             PrimaryCredentialsType = typeof(Msv1.KIWI_MSV1_0_PRIMARY_CREDENTIALS);
             PrimaryCredentialType = typeof(Msv1.MSV1_0_PRIMARY_CREDENTIAL_10);
             ListType = typeof(Msv1.KIWI_MSV1_0_LIST_63);
-            ListTypeSize = sizeof(Msv1.KIWI_MSV1_0_LIST_63);
+            ListTypeSize = Marshal.SizeOf(typeof(Msv1.KIWI_MSV1_0_LIST_63));
             LogonSessionType = typeof(Kerberos.KIWI_KERBEROS_LOGON_SESSION_10);
-            LogonSessionTypeSize = sizeof(Kerberos.KIWI_KERBEROS_LOGON_SESSION_10);
+            LogonSessionTypeSize = Marshal.SizeOf(typeof(Kerberos.KIWI_KERBEROS_LOGON_SESSION_10));
             KerberosPrimaryCredentialType = typeof(Kerberos.KIWI_KERBEROS_10_PRIMARY_CREDENTIAL);
             TSCredType = typeof(Tspkg.KIWI_TS_CREDENTIAL);
 
