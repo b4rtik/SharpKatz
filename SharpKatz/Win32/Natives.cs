@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SharpKatz.Crypto;
+using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -1778,6 +1779,14 @@ namespace SharpKatz.Win32
 
         }
 
+        private static IntPtr GetBcrypt()
+        {
+
+            return LoadLibrary("bcrypt.dll");
+
+        }
+        
+
         public static IntPtr GetCurrentProcess()
         {
             IntPtr proc = GetProcAddress(GetKernel32(), "GetCurrentProcess");
@@ -2017,5 +2026,48 @@ namespace SharpKatz.Win32
         {
             return CustomLoadLibrary.GetDllAddress(name, conloadfromdisk);
         }
+
+        public static int BCryptCloseAlgorithmProvider(IntPtr hAlgorithm, int flags)
+        {
+            IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptCloseAlgorithmProvider");
+            SysCall.Delegates.BCryptCloseAlgorithmProvider BCryptCloseAlgorithmProvider = (SysCall.Delegates.BCryptCloseAlgorithmProvider)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptCloseAlgorithmProvider));
+            return BCryptCloseAlgorithmProvider( hAlgorithm,  flags);
+        }
+
+        public static int BCryptDestroyKey(IntPtr hKey)
+        {
+            IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptDestroyKey");
+            SysCall.Delegates.BCryptDestroyKey BCryptDestroyKey = (SysCall.Delegates.BCryptDestroyKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptDestroyKey));
+            return BCryptDestroyKey( hKey);
+        }
+
+        public static int BCryptOpenAlgorithmProvider(out SafeBCryptAlgorithmHandle phAlgorithm, string pszAlgId, string pszImplementation, int dwFlags)
+        {
+            IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptOpenAlgorithmProvider");
+            SysCall.Delegates.BCryptOpenAlgorithmProvider BCryptOpenAlgorithmProvider = (SysCall.Delegates.BCryptOpenAlgorithmProvider)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptOpenAlgorithmProvider));
+            return BCryptOpenAlgorithmProvider(out  phAlgorithm,  pszAlgId,  pszImplementation,  dwFlags);
+        }
+
+        public static int BCryptSetProperty(SafeHandle hProvider, string pszProperty, string pbInput, int cbInput, int dwFlags)
+        {
+            IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptSetProperty");
+            SysCall.Delegates.BCryptSetProperty BCryptSetProperty = (SysCall.Delegates.BCryptSetProperty)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptSetProperty));
+            return BCryptSetProperty( hProvider,  pszProperty,  pbInput,  cbInput,  dwFlags);
+        }
+
+        public static int BCryptGenerateSymmetricKey(SafeBCryptAlgorithmHandle hAlgorithm, out SafeBCryptKeyHandle phKey, IntPtr pbKeyObject, int cbKeyObject, IntPtr pbSecret, int cbSecret, int flags)
+        {
+            IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptGenerateSymmetricKey");
+            SysCall.Delegates.BCryptGenerateSymmetricKey BCryptGenerateSymmetricKey = (SysCall.Delegates.BCryptGenerateSymmetricKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptGenerateSymmetricKey));
+            return BCryptGenerateSymmetricKey( hAlgorithm, out  phKey,  pbKeyObject,  cbKeyObject,  pbSecret,  cbSecret,  flags);
+        }
+
+        public static int BCryptDecrypt(SafeBCryptKeyHandle hKey, IntPtr pbInput, int cbInput, IntPtr pPaddingInfo, IntPtr pbIV, int cbIV, IntPtr pbOutput, int cbOutput, out int pcbResult, int dwFlags)
+        {
+            IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptDecrypt");
+            SysCall.Delegates.BCryptDecrypt BCryptDecrypt = (SysCall.Delegates.BCryptDecrypt)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptDecrypt));
+            return BCryptDecrypt( hKey,  pbInput,  cbInput,  pPaddingInfo,  pbIV,  cbIV,  pbOutput,  cbOutput, out  pcbResult,  dwFlags);
+        }
+
     }
 }
