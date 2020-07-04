@@ -183,6 +183,7 @@ namespace SharpKatz
                 if(!string.IsNullOrEmpty(altservice) )
                     alt_service = altservice;
 
+                
                 if (!string.IsNullOrEmpty(guid))
                 {
                     Console.WriteLine("[!] {0} will be the Guid",guid);
@@ -197,6 +198,7 @@ namespace SharpKatz
                 {
                     Module.DCSync.FinCredential(domain, dc, altservice: alt_service, alldata: true);
                 }
+                
             }
         }
     }

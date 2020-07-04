@@ -1379,7 +1379,144 @@ namespace SharpKatz.Win32
             // PropertyValue in HEX !
         }
 
+
+        public enum ASN1encodingrule_e
+        {
+            ASN1_BER_RULE_BER = 0x0100,
+            ASN1_BER_RULE_CER = 0x0200,
+            ASN1_BER_RULE_DER = 0x0400,
+            ASN1_BER_RULE = ASN1_BER_RULE_BER | ASN1_BER_RULE_CER | ASN1_BER_RULE_DER,
+        }
+
+        public enum ASN1Flags : long
+        {
+            ASN1FLAGS_NONE = 0x00000000L, /* no flags */
+            ASN1FLAGS_NOASSERT = 0x00001000L, /* no asertion */
+        }
+
+        public enum ASN1error_e
+        {
+            ASN1_SUCCESS = 0,            /* success */
+
+            // Teles specific error codes
+            ASN1_ERR_INTERNAL = (-1001),      /* internal error */
+            ASN1_ERR_EOD = (-1002),      /* unexpected end of data */
+            ASN1_ERR_CORRUPT = (-1003),      /* corrupted data */
+            ASN1_ERR_LARGE = (-1004),      /* value too large */
+            ASN1_ERR_CONSTRAINT = (-1005),      /* constraint violated */
+            ASN1_ERR_MEMORY = (-1006),      /* out of memory */
+            ASN1_ERR_OVERFLOW = (-1007),      /* buffer overflow */
+            ASN1_ERR_BADPDU = (-1008),      /* function not supported for this pdu*/
+            ASN1_ERR_BADARGS = (-1009),      /* bad arguments to function call */
+            ASN1_ERR_BADREAL = (-1010),      /* bad real value */
+            ASN1_ERR_BADTAG = (-1011),      /* bad tag value met */
+            ASN1_ERR_CHOICE = (-1012),      /* bad choice value */
+            ASN1_ERR_RULE = (-1013),      /* bad encoding rule */
+            ASN1_ERR_UTF8 = (-1014),      /* bad unicode (utf8) */
+
+            // New error codes
+            ASN1_ERR_PDU_TYPE = (-1051),      /* bad pdu type */
+            ASN1_ERR_NYI = (-1052),      /* not yet implemented */
+
+            // Teles specific warning codes
+            ASN1_WRN_EXTENDED = 1001,         /* skipped unknown extension(s) */
+            ASN1_WRN_NOEOD = 1002,         /* end of data expected */
+        }
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ASN1BerFunArr_t
+        {
+            IntPtr apfnEncoder;//ASN1BerEncFun_t
+            IntPtr apfnDecoder;//ASN1BerDecFun_t
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ASN1module_t
+        {
+            uint nModuleName;
+            ASN1encodingrule_e eRule;
+            uint dwFlags;
+            uint cPDUs;
+
+            //__field_xcount(cPDUs)
+            IntPtr apfnFreeMemory;//ASN1FreeFun_t
+
+            //__field_xcount(cPDUs)
+            IntPtr acbStructSize;//uint
+
+            ASN1BerFunArr_t BER;
+        }
+
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ASN1encoding_s
+        {
+            public uint magic;  /* magic for this structure */
+            public uint version;/* version number of this library */
+            public IntPtr module; /* module this encoding_t depends to */
+            //__field_bcount(size)
+            IntPtr buf;    /* buffer to encode into */
+            uint size;   /* current size of buffer */
+            uint len;    /* len of encoded data in buffer */
+            ASN1error_e err;    /* error code for last encoding */
+            uint bit;
+            IntPtr pos;
+            uint cbExtraHeader;
+            ASN1encodingrule_e eRule;
+            uint dwFlags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct ASN1decoding_s
+        {
+            uint magic;  /* magic for this structure */
+            uint version;/* version number of this library */
+            IntPtr module; /* module this decoding_t depends to */
+            //__field_bcount(size)
+            IntPtr buf;    /* buffer to decode from */
+            uint size;   /* size of buffer */
+            uint len;    /* len of decoded data in buffer */
+            ASN1error_e err;    /* error code for last decoding */
+            uint bit;
+            IntPtr pos;
+            ASN1encodingrule_e eRule;
+            uint dwFlags;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct OssEncodedOID
+        {
+            public ushort length;
+            public IntPtr value;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PARTIAL_ATTR_VECTOR_V1_EXT
+        {
+            public uint dwVersion;
+            public uint dwReserved1;
+            public uint cAttrs;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 19)]
+            public uint[] rgPartialAttr;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct PrefixTableEntry
+        {
+            public uint ndx;
+            public OID_t prefix;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct OID_t
+        {
+            public uint length;
+            public IntPtr elements;//Byte *
+        }
+
         //DCSync author LE TOUX (vincent.letoux@mysmartlogon.com)
+        //https://raw.githubusercontent.com/vletoux/MakeMeEnterpriseAdmin/master/MakeMeEnterpriseAdmin.ps1
         [StructLayout(LayoutKind.Sequential)]
         public struct RPC_SECURITY_QOS
         {
@@ -1667,12 +1804,12 @@ namespace SharpKatz.Win32
 
         public enum ATT
         {
+
+            ATT_WHEN_CREATED = 131074,
+            ATT_WHEN_CHANGED = 131075,
             [Description("displayName")]
             ATT_RDN = 589825,
             ATT_OBJECT_SID = 589970,
-            ATT_WHEN_CREATED = 131074,
-            ATT_WHEN_CHANGED = 131075,
-
             ATT_SAM_ACCOUNT_NAME = 590045,
             ATT_USER_PRINCIPAL_NAME = 590480,
             ATT_SERVICE_PRINCIPAL_NAME = 590595,
@@ -1686,12 +1823,20 @@ namespace SharpKatz.Win32
             ATT_PWD_LAST_SET = 589920,
             ATT_ACCOUNT_EXPIRES = 589983,
             ATT_LOCKOUT_TIME = 590486,
-
             ATT_UNICODE_PWD = 589914,
             ATT_NT_PWD_HISTORY = 589918,
             ATT_DBCS_PWD = 589879,
             ATT_LM_PWD_HISTORY = 589984,
             ATT_SUPPLEMENTAL_CREDENTIALS = 589949,
+            ATT_CURRENT_VALUE = 589851,
+            ATT_TRUST_ATTRIBUTES = 590294,
+            ATT_TRUST_AUTH_INCOMING = 589953,
+            ATT_TRUST_AUTH_OUTGOING = 589959,
+            ATT_TRUST_DIRECTION = 589956,
+            ATT_TRUST_PARENT = 590295,
+            ATT_TRUST_PARTNER = 589957,
+            ATT_TRUST_TYPE = 589960
+
         }
         #endregion
 
@@ -1785,7 +1930,13 @@ namespace SharpKatz.Win32
             return LoadLibrary("bcrypt.dll");
 
         }
-        
+
+        private static IntPtr GetMsasn1()
+        {
+
+            return LoadLibrary("msasn1.dll");
+
+        }
 
         public static IntPtr GetCurrentProcess()
         {
@@ -1885,11 +2036,11 @@ namespace SharpKatz.Win32
             return AdjustTokenPrivileges(TokenHandle, DisableAllPrivileges, ref NewState, BufferLengthInBytes, ref PreviousState, out ReturnLengthInBytes);
         }
 
-        public static bool LookupAccountName( string lpSystemName, string lpAccountName, byte[] Sid, ref uint cbSid, StringBuilder ReferencedDomainName, ref uint cchReferencedDomainName, out SID_NAME_USE peUse)
+        public static bool LookupAccountName(string lpSystemName, string lpAccountName, byte[] Sid, ref uint cbSid, StringBuilder ReferencedDomainName, ref uint cchReferencedDomainName, out SID_NAME_USE peUse)
         {
             IntPtr proc = GetProcAddress(GetAdvapi32(), "LookupAccountNameA");
             SysCall.Delegates.LookupAccountNameA LookupAccountNameA = (SysCall.Delegates.LookupAccountNameA)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.LookupAccountNameA));
-            return LookupAccountNameA( lpSystemName,  lpAccountName, Sid, ref  cbSid,  ReferencedDomainName, ref  cchReferencedDomainName, out  peUse);
+            return LookupAccountNameA(lpSystemName, lpAccountName, Sid, ref cbSid, ReferencedDomainName, ref cchReferencedDomainName, out peUse);
         }
 
         public static bool ConvertSidToStringSid(byte[] pSID, out string ptrSid)
@@ -2031,43 +2182,98 @@ namespace SharpKatz.Win32
         {
             IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptCloseAlgorithmProvider");
             SysCall.Delegates.BCryptCloseAlgorithmProvider BCryptCloseAlgorithmProvider = (SysCall.Delegates.BCryptCloseAlgorithmProvider)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptCloseAlgorithmProvider));
-            return BCryptCloseAlgorithmProvider( hAlgorithm,  flags);
+            return BCryptCloseAlgorithmProvider(hAlgorithm, flags);
         }
 
         public static int BCryptDestroyKey(IntPtr hKey)
         {
             IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptDestroyKey");
             SysCall.Delegates.BCryptDestroyKey BCryptDestroyKey = (SysCall.Delegates.BCryptDestroyKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptDestroyKey));
-            return BCryptDestroyKey( hKey);
+            return BCryptDestroyKey(hKey);
         }
 
         public static int BCryptOpenAlgorithmProvider(out SafeBCryptAlgorithmHandle phAlgorithm, string pszAlgId, string pszImplementation, int dwFlags)
         {
             IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptOpenAlgorithmProvider");
             SysCall.Delegates.BCryptOpenAlgorithmProvider BCryptOpenAlgorithmProvider = (SysCall.Delegates.BCryptOpenAlgorithmProvider)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptOpenAlgorithmProvider));
-            return BCryptOpenAlgorithmProvider(out  phAlgorithm,  pszAlgId,  pszImplementation,  dwFlags);
+            return BCryptOpenAlgorithmProvider(out phAlgorithm, pszAlgId, pszImplementation, dwFlags);
         }
 
         public static int BCryptSetProperty(SafeHandle hProvider, string pszProperty, string pbInput, int cbInput, int dwFlags)
         {
             IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptSetProperty");
             SysCall.Delegates.BCryptSetProperty BCryptSetProperty = (SysCall.Delegates.BCryptSetProperty)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptSetProperty));
-            return BCryptSetProperty( hProvider,  pszProperty,  pbInput,  cbInput,  dwFlags);
+            return BCryptSetProperty(hProvider, pszProperty, pbInput, cbInput, dwFlags);
         }
 
         public static int BCryptGenerateSymmetricKey(SafeBCryptAlgorithmHandle hAlgorithm, out SafeBCryptKeyHandle phKey, IntPtr pbKeyObject, int cbKeyObject, IntPtr pbSecret, int cbSecret, int flags)
         {
             IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptGenerateSymmetricKey");
             SysCall.Delegates.BCryptGenerateSymmetricKey BCryptGenerateSymmetricKey = (SysCall.Delegates.BCryptGenerateSymmetricKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptGenerateSymmetricKey));
-            return BCryptGenerateSymmetricKey( hAlgorithm, out  phKey,  pbKeyObject,  cbKeyObject,  pbSecret,  cbSecret,  flags);
+            return BCryptGenerateSymmetricKey(hAlgorithm, out phKey, pbKeyObject, cbKeyObject, pbSecret, cbSecret, flags);
         }
 
         public static int BCryptDecrypt(SafeBCryptKeyHandle hKey, IntPtr pbInput, int cbInput, IntPtr pPaddingInfo, IntPtr pbIV, int cbIV, IntPtr pbOutput, int cbOutput, out int pcbResult, int dwFlags)
         {
             IntPtr proc = GetProcAddress(GetBcrypt(), "BCryptDecrypt");
             SysCall.Delegates.BCryptDecrypt BCryptDecrypt = (SysCall.Delegates.BCryptDecrypt)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.BCryptDecrypt));
-            return BCryptDecrypt( hKey,  pbInput,  cbInput,  pPaddingInfo,  pbIV,  cbIV,  pbOutput,  cbOutput, out  pcbResult,  dwFlags);
+            return BCryptDecrypt(hKey, pbInput, cbInput, pPaddingInfo, pbIV, cbIV, pbOutput, cbOutput, out pcbResult, dwFlags);
         }
 
+        public static IntPtr ASN1_CreateModule(uint nVersion, uint eRule, uint dwFlags, uint cPDU, IntPtr[] apfnEncoder, IntPtr[] apfnDecoder, IntPtr[] apfnFreeMemory, int[] acbStructSize, uint nModuleName)
+        {
+            IntPtr proc = GetProcAddress(GetMsasn1(), "ASN1_CreateModule");
+            SysCall.Delegates.ASN1_CreateModule ASN1_CreateModule = (SysCall.Delegates.ASN1_CreateModule)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ASN1_CreateModule));
+            return  ASN1_CreateModule( nVersion,  eRule,  dwFlags,  cPDU,  apfnEncoder,  apfnDecoder,  apfnFreeMemory, acbStructSize, nModuleName);
+        }
+
+        public static ASN1error_e ASN1_CreateEncoder(IntPtr pModule, out IntPtr ppEncoderInfo, IntPtr pbBuf, uint cbBufSize, IntPtr pParent)
+        {
+            IntPtr proc = GetProcAddress(GetMsasn1(), "ASN1_CreateEncoder");
+            SysCall.Delegates.ASN1_CreateEncoder ASN1_CreateEncoder = (SysCall.Delegates.ASN1_CreateEncoder)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ASN1_CreateEncoder));
+            return ASN1_CreateEncoder( pModule, out  ppEncoderInfo,  pbBuf,  cbBufSize,  pParent);
+        }
+
+        public static ASN1error_e ASN1_CreateDecoder(IntPtr pModule, out IntPtr ppDecoderInfo, IntPtr pbBuf, uint cbBufSize, IntPtr pParent)
+        {
+            IntPtr proc = GetProcAddress(GetMsasn1(), "ASN1_CreateDecoder");
+            SysCall.Delegates.ASN1_CreateDecoder ASN1_CreateDecoder = (SysCall.Delegates.ASN1_CreateDecoder)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ASN1_CreateDecoder));
+            return ASN1_CreateDecoder( pModule, out  ppDecoderInfo,  pbBuf,  cbBufSize,  pParent);
+        }
+
+        public static bool ASN1BERDotVal2Eoid(IntPtr pEncoderInfo, string dotOID, IntPtr encodedOID)
+        {
+            IntPtr proc = GetProcAddress(GetMsasn1(), "ASN1BERDotVal2Eoid");
+            SysCall.Delegates.ASN1BERDotVal2Eoid ASN1BERDotVal2Eoid = (SysCall.Delegates.ASN1BERDotVal2Eoid)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ASN1BERDotVal2Eoid));
+            return ASN1BERDotVal2Eoid( pEncoderInfo,  dotOID,  encodedOID);
+        }
+
+        public static void ASN1_FreeEncoded(ref ASN1encoding_s pEncoderInfo, IntPtr pBuf)
+        {
+            IntPtr proc = GetProcAddress(GetMsasn1(), "ASN1_FreeEncoded");
+            SysCall.Delegates.ASN1_FreeEncoded ASN1_FreeEncoded = (SysCall.Delegates.ASN1_FreeEncoded)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ASN1_FreeEncoded));
+            ASN1_FreeEncoded(ref  pEncoderInfo,  pBuf);
+        }
+
+        public static void ASN1_CloseEncoder(IntPtr pEncoderInfo)
+        {
+            IntPtr proc = GetProcAddress(GetMsasn1(), "ASN1_CloseEncoder");
+            SysCall.Delegates.ASN1_CloseEncoder ASN1_CloseEncoder = (SysCall.Delegates.ASN1_CloseEncoder)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ASN1_CloseEncoder));
+            ASN1_CloseEncoder(pEncoderInfo);
+        }
+
+        public static void ASN1_CloseDecoder(IntPtr pDecoderInfo)
+        {
+            IntPtr proc = GetProcAddress(GetMsasn1(), "ASN1_CloseDecoder");
+            SysCall.Delegates.ASN1_CloseDecoder ASN1_CloseDecoder = (SysCall.Delegates.ASN1_CloseDecoder)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ASN1_CloseDecoder));
+            ASN1_CloseDecoder(pDecoderInfo);
+        }
+
+        public static void ASN1_CloseModule(IntPtr pModule)
+        {
+            IntPtr proc = GetProcAddress(GetMsasn1(), "ASN1_CloseModule");
+            SysCall.Delegates.ASN1_CloseModule ASN1_CloseModule = (SysCall.Delegates.ASN1_CloseModule)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ASN1_CloseModule));
+            ASN1_CloseModule( pModule);
+        }
     }
 }
