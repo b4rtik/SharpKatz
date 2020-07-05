@@ -1,10 +1,15 @@
-﻿using Microsoft.Win32.SafeHandles;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+using Microsoft.Win32.SafeHandles;
 using System;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
 using static SharpKatz.Win32.Natives;
-using static SharpKatz.Crypto.Natives;
 
 namespace SharpKatz.Crypto
 {
@@ -116,12 +121,5 @@ namespace SharpKatz.Crypto
 
             return passDecrypted;
         }
-    }
-
-    class Natives
-    {
-
-
-        
     }
 }

@@ -1,4 +1,10 @@
-﻿using System;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+using System;
 using System.Collections.Generic;
 using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 using static SharpKatz.Win32.Natives;

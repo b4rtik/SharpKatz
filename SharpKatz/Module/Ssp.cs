@@ -1,4 +1,10 @@
-﻿using SharpKatz.Credential;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+using SharpKatz.Credential;
 using SharpKatz.Crypto;
 using System;
 using System.Collections.Generic;

@@ -57,7 +57,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="BCrypt.cs" />
+    <Compile Include="Crypto\BCrypt.cs" />
     <Compile Include="Credential\Credential.cs" />
     <Compile Include="Module\CredMan.cs" />
     <Compile Include="Module\DCSync.cs" />

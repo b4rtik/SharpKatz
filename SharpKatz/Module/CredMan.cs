@@ -1,4 +1,10 @@
-﻿using SharpKatz.Credential;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+using SharpKatz.Credential;
 using SharpKatz.Crypto;
 using System;
 using System.Collections.Generic;
@@ -12,7 +18,6 @@ namespace SharpKatz.Module
     class CredMan
     {
 
-        //static long max_search_size = 200000;
         [StructLayout(LayoutKind.Sequential)]
         public struct KIWI_CREDMAN_LIST_ENTRY
         {

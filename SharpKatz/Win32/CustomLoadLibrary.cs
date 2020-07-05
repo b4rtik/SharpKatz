@@ -1,4 +1,16 @@
-﻿using System;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+/*
+ * Adattato da 
+ * https://github.com/cobbr/SharpSploit/blob/master/SharpSploit/Execution/DynamicInvoke/Generic.cs
+ * 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;

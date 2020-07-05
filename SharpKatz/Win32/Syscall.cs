@@ -248,10 +248,6 @@ namespace SharpKatz.Win32
 
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
-            public delegate bool RevertToSelf();
-
-            [SuppressUnmanagedCodeSecurity]
-            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
             public delegate IntPtr GetCurrentProcess();
 
             [SuppressUnmanagedCodeSecurity]

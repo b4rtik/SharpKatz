@@ -1,14 +1,16 @@
-﻿using NDesk.Options;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+using NDesk.Options;
 using SharpKatz.Credential;
 using SharpKatz.Win32;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.DirectoryServices;
-using System.Runtime.InteropServices;
-using System.Text;
-using static SharpKatz.Module.DCSync;
-using static SharpKatz.Module.Kerberos;
 
 namespace SharpKatz
 {

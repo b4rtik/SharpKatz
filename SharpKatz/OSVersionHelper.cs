@@ -1,4 +1,10 @@
-﻿using SharpKatz.WinBuild;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+using SharpKatz.WinBuild;
 using System;
 using System.Linq;
 using System.Reflection;

