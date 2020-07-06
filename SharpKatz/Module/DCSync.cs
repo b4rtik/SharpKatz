@@ -11,6 +11,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
@@ -208,13 +209,13 @@ namespace SharpKatz.Module
 
             if (alldata)
             {
-                exportpath = Path.GetTempPath() + DateTime.Now.Millisecond.ToString() + ".txt";
+                exportpath = Path.GetTempPath() + DateTime.Now.ToString("ddMMyyyyHHmmss", DateTimeFormatInfo.InvariantInfo) + ".txt";
                 FileStream outputfile = File.Create(exportpath);
                 outputfile.Close();
                 Console.WriteLine("[*] Output file will be {0}", exportpath);
             }
 
-            kull_m_asn1_init();
+            Asn1_init();
 
             hBinding = CreateBinding(dc, altservice);
 
@@ -288,7 +289,7 @@ namespace SharpKatz.Module
                 }
             }
 
-            kull_m_asn1_term();
+            Asn1_term();
 
             if (alldata)
             {
@@ -466,7 +467,7 @@ namespace SharpKatz.Module
         static IntPtr[] kull_m_asn1_encdecfreefntab = { IntPtr.Zero };
         static int[] kull_m_asn1_sizetab = { 0 };
 
-        public static bool kull_m_asn1_init()
+        public static bool Asn1_init()
         {
             bool status = false;
             ASN1error_e ret;
@@ -505,12 +506,12 @@ namespace SharpKatz.Module
 
             status = (hASN1Module != IntPtr.Zero) && !ASN1enc.Equals(default(ASN1encoding_s)) && !ASN1dec.Equals(default(ASN1decoding_s));
             if (!status)
-                kull_m_asn1_term();
+                Asn1_term();
 
             return status;
         }
 
-        public static void kull_m_asn1_term()
+        public static void Asn1_term()
         {
             if (hASN1Module != IntPtr.Zero)
             {
