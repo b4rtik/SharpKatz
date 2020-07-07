@@ -65,16 +65,16 @@ namespace SharpKatz
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc");
                 return;
             }
+                        
+            if (string.IsNullOrEmpty(command))
+                command = "logonpasswords";
 
-            if (!command.Equals("logonpasswords") && !command.Equals("msv") && !command.Equals("kerberos") && !command.Equals("credman") && 
+            if (!command.Equals("logonpasswords") && !command.Equals("msv") && !command.Equals("kerberos") && !command.Equals("credman") &&
                 !command.Equals("tspkg") && !command.Equals("wdigest") && !command.Equals("ekeys") && !command.Equals("dcsync"))
             {
                 Console.WriteLine("Unknown command");
                 return;
             }
-
-            if (string.IsNullOrEmpty(command))
-                command = "logonpasswords";
 
             if (IntPtr.Size != 8)
             {
