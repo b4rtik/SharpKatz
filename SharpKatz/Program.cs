@@ -16,10 +16,6 @@ namespace SharpKatz
 {
     public class Program
     {
-        public static void Execute(string[] args)
-        {
-            Main(args);
-        }
 
         public static void Main(string[] args)
         {
