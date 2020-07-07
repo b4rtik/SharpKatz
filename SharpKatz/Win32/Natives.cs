@@ -133,16 +133,6 @@ namespace SharpKatz.Win32
         public const int FILE_READ_ONLY_VOLUME = 0x00080000;
         public const int CREATE_ALWAYS = 2;
 
-        public struct WIN_VER_INFO
-        {
-            public string chOSMajorMinor;
-            public long dwBuildNumber;
-            public UNICODE_STRING ProcName;
-            public IntPtr hTargetPID;
-            public string lpApiCall;
-            public int SystemCall;
-        }
-
         [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         public struct OSVERSIONINFOEXW
         {

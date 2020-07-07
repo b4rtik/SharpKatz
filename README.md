@@ -54,7 +54,7 @@ Dump user credential by username <br>
 Dump user credential by GUID <br>
 <br>
 ```SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc```<br>
-Export the entire dataset from AD <br>
+Export the entire dataset from AD to a file created in the current user's temp forder<br>
 <br>
 
 ## Credits

