@@ -16,6 +16,11 @@ namespace SharpKatz
 {
     public class Program
     {
+        public static void Execute(string[] args)
+        {
+            Main(args);
+        }
+
         public static void Main(string[] args)
         {
 
@@ -30,7 +35,7 @@ namespace SharpKatz
 
             OptionSet opts = new OptionSet()
             {
-                { "Command=", "--Command logonpasswords,ekeys,msv,kerberos,tspkg,credman,wdigest", v => command = v },
+                { "Command=", "--Command logonpasswords,ekeys,msv,kerberos,tspkg,credman,wdigest,dcsync", v => command = v },
                 { "User=", "--User [user]", v => user = v },
                 { "Guid=", "--Guid [guid]", v => guid = v },
                 { "Domain=", "--Domain [domain]", v => domain = v },
