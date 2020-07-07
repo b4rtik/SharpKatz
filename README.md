@@ -56,3 +56,9 @@ Dump user credential by GUID <br>
 ```SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc```<br>
 Export the entire dataset from AD <br>
 <br>
+
+## Credits
+
+The project depends entirely on the work of [Benjamin Delpy](https://twitter.com/gentilkiwi) and [Vincent Le Toux](https://twitter.com/mysmartlogon).<br>
+The analysis of the code was conducted following the example from [this blog post](https://blog.xpnsec.com/exploring-mimikatz-part-1/) from [xpn](https://twitter.com/_xpn_).<br>
+<br>
