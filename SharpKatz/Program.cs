@@ -36,7 +36,7 @@ namespace SharpKatz
                 { "Guid=", "--Guid [guid]", v => guid = v },
                 { "Domain=", "--Domain [domain]", v => domain = v },
                 { "DomainController=", "--DomainController [domaincontroller]", v => dc = v },
-                { "Altservice=", "--Altservice [domaincontroller]", v => altservice = v },
+                { "Altservice=", "--Altservice [alternative service]", v => altservice = v },
                 { "h|?|help",  "Show available options", v => showhelp = v != null },
             };
 
