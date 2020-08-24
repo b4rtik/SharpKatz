@@ -252,7 +252,7 @@ namespace SharpKatz
             return res.ToString();
         }
 
-        public static byte[] GetBytes(byte[] source, int startindex, int lenght)
+        public static byte[] GetBytes(byte[] source, long startindex, int lenght)
         {
             byte[] resBytes = new byte[lenght];
             Array.Copy(source, startindex, resBytes, 0, resBytes.Length);

