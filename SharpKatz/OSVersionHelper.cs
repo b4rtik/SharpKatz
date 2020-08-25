@@ -23,7 +23,7 @@ namespace SharpKatz
         static public int KULL_M_WIN_BUILD_10_1703 = 15063;
         //int KULL_M_WIN_BUILD_10_1709 = 16299;
         static public int KULL_M_WIN_BUILD_10_1803 = 17134;
-        //int KULL_M_WIN_BUILD_10_1809 = 17763;
+        static public int KULL_M_WIN_BUILD_10_1809 = 17763;
         static public int KULL_M_WIN_BUILD_10_1903 = 18362;
         static public int KULL_M_WIN_BUILD_10_2004 = 19041;
 
@@ -111,6 +111,7 @@ namespace SharpKatz
             new WinBuild1511(),
             new WinBuild1607(),
             new WinBuild1703(),
+            new WinBuild1803(),
             new WinBuild1803(),
             new WinBuild1903(),
             new WinBuild2004()

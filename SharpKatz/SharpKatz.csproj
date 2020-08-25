@@ -72,6 +72,7 @@
     <Compile Include="WinBuild\WinBuild1607.cs" />
     <Compile Include="WinBuild\WinBuild1511.cs" />
     <Compile Include="WinBuild\WinBuild1703.cs" />
+    <Compile Include="WinBuild\WinBuild1809.cs" />
     <Compile Include="WinBuild\WinBuild2004.cs" />
     <Compile Include="WinBuild\WinBuild1903.cs" />
     <Compile Include="WinBuild\WinBuild1803.cs" />

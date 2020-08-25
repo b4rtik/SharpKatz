@@ -153,7 +153,7 @@ namespace SharpKatz
             extractedAesKey = Utility.ReadStruct<KIWI_BCRYPT_KEY81>(extractedAesKeyBytes);
 
             this.aeskey = extractedAesKey.hardkey.data;
-            
+
             return 0;
         }
 

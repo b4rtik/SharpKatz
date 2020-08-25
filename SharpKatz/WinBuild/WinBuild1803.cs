@@ -65,8 +65,8 @@ namespace SharpKatz.WinBuild
 
             keyIVSig = keyIVSigAll;
 
-            IV_OFFSET = 67;
-            DES_OFFSET = -89;
+            IV_OFFSET = 61;
+            DES_OFFSET = -73;
             AES_OFFSET = 16;
 
             logSessListSig = PTRN_WIN6_PasswdSet;
