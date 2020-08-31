@@ -87,8 +87,8 @@ namespace SharpKatz
             long keySigOffset = 0;
             long ivOffset = 0;
             long desOffset = 0, aesOffset = 0;
-            KIWI_BCRYPT_HANDLE_KEY h3DesKey = new KIWI_BCRYPT_HANDLE_KEY();
-            KIWI_BCRYPT_HANDLE_KEY hAesKey = new KIWI_BCRYPT_HANDLE_KEY();
+            KIWI_BCRYPT_HANDLE_KEY h3DesKey;
+            KIWI_BCRYPT_HANDLE_KEY hAesKey;
             KIWI_BCRYPT_KEY81 extracted3DesKey, extractedAesKey;
             IntPtr keyPointer = IntPtr.Zero;
 
