@@ -223,10 +223,10 @@ namespace SharpKatz
 
         public static string PrintHexBytes(byte[] byteArray)
         {
-            StringBuilder res = new StringBuilder();
+            StringBuilder res = new StringBuilder(byteArray.Length * 3);
             for (int i = 0; i < byteArray.Length; i++)
             {
-                res.AppendFormat("{0:x2} ", byteArray[i]);
+                res.AppendFormat(NumberFormatInfo.InvariantInfo, "{0:x2} ", byteArray[i]);
             }
             return res.ToString();
         }
@@ -241,13 +241,13 @@ namespace SharpKatz
 
         public static string PrintHashBytes(byte[] byteArray)
         {
-            StringBuilder res = new StringBuilder();
-            if(byteArray != null)
+            if(byteArray == null)
+                return string.Empty;
+
+            StringBuilder res = new StringBuilder(byteArray.Length * 2);
+            for (int i = 0; i < byteArray.Length; i++)
             {
-                for (int i = 0; i < byteArray.Length; i++)
-                {
-                    res.AppendFormat("{0:x2}", byteArray[i]);
-                }
+                res.AppendFormat(NumberFormatInfo.InvariantInfo, "{0:x2}", byteArray[i]);
             }
             return res.ToString();
         }
