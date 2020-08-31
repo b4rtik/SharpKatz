@@ -108,8 +108,7 @@ namespace SharpKatz.Module
 
         private static void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
-            
-            if (pElement == null)
+            if (pElement == IntPtr.Zero)
                 return;
 
             byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Convert.ToUInt64(Marshal.SizeOf(typeof(RTL_AVL_TABLE))));

