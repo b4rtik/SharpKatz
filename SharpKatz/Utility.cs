@@ -286,7 +286,10 @@ namespace SharpKatz
         public static void PrintLogonList(List<Logon> logonlist)
         {
             if (logonlist == null || logonlist.Count == 0)
+            {
                 Console.WriteLine("No entry found");
+                return;
+            }
 
             foreach (Logon logon in logonlist)
             {
