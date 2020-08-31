@@ -238,7 +238,6 @@ namespace SharpKatz.Module
             Console.WriteLine("[*]  |  LUID {0} ; {1} ({2:X}:{3:X})", data.LogonId.HighPart, data.LogonId.LowPart, data.LogonId.HighPart, data.LogonId.LowPart);
 
             Module.Msv1.WriteMsvCredentials(hProcess, oshelper, iv, aeskey, deskey, logonlist, ref data);
-           // kuhl_m_sekurlsa_enum(kuhl_m_sekurlsa_enum_callback_msv_pth, data);
 
             List<KerberosLogonItem> klogonlist = Module.Kerberos.FindCredentials(hProcess, kerberos, oshelper, iv, aeskey, deskey, logonlist);
 
@@ -246,8 +245,7 @@ namespace SharpKatz.Module
             {
                Module.Kerberos.WriteKerberosKeys(ref hProcess, s, oshelper, iv, aeskey, deskey, ref data);
             }
-
-            //kuhl_m_sekurlsa_enum(kuhl_m_sekurlsa_enum_callback_kerberos_pth, data);
+            
             Console.WriteLine("[*]");
         }
 
