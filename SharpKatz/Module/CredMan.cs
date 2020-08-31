@@ -124,14 +124,7 @@ namespace SharpKatz.Module
                     {
                         Credential.CredMan credmanentry = new Credential.CredMan();
                         credmanentry.Reference = reference;
-                        if (!string.IsNullOrEmpty(username))
-                        {
-                            credmanentry.UserName = username;
-                        }
-                        else
-                        {
-                            credmanentry.UserName = "[NULL]";
-                        }
+                        credmanentry.UserName = username;
 
                         if (!string.IsNullOrEmpty(domain))
                         {

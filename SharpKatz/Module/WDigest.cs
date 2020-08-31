@@ -85,15 +85,7 @@ namespace SharpKatz.Module
                         LUID luid = entry.LocallyUniqueIdentifier;
 
                         Credential.WDigest wdigestentry = new Credential.WDigest();
-
-                        if (!string.IsNullOrEmpty(username))
-                        {
-                            wdigestentry.UserName = username;
-                        }
-                        else
-                        {
-                            wdigestentry.UserName = "[NULL]";
-                        }
+                        wdigestentry.UserName = username;
 
                         if (!string.IsNullOrEmpty(hostname))
                         {
