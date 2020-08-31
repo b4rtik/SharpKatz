@@ -821,7 +821,7 @@ namespace SharpKatz.Module
         {
             bool result = false;
             SID_NAME_USE sidNameUse;
-            pSid = new byte[0];
+            pSid = Array.Empty<byte>();
             uint cbSid = 0, cchReferencedDomainName = 0;
             StringBuilder sbDomain = new StringBuilder();
             pDomain = "";
@@ -837,7 +837,7 @@ namespace SharpKatz.Module
                 else
                 {
                     pDomain = "";
-                    pSid = new byte[0];
+                    pSid = Array.Empty<byte>();
                 }
             }
             return result;
