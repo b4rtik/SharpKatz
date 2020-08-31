@@ -373,9 +373,6 @@ namespace SharpKatz.Module
 
                 encodedOID = (OssEncodedOID)Marshal.PtrToStructure(ot, typeof(OssEncodedOID));
 
-                //Console.WriteLine("dotOID " + dotOID);
-                //Console.WriteLine("Marshal.PtrToStringAnsi(encodedOID.value) " + Marshal.PtrToStringAnsi(encodedOID.value));
-                //Console.WriteLine("Marshal.ReadUInt32(encodedOID.value,8) " + (UInt64)Marshal.ReadInt64(encodedOID.value));
             }
             return status;
         }
@@ -384,19 +381,6 @@ namespace SharpKatz.Module
         {
             bool status = false;
             IntPtr entries;
-
-            /*for (int i = 0; i < prefixTable.PrefixCount; i++)
-            {
-                if (prefixTable.pPrefixEntry[i].prefix.length == oidPrefix.length)
-                {
-                    if (EqualMemory(prefixTable.pPrefixEntry[i].prefix.elements, oidPrefix.value, oidPrefix.length))
-                    {
-                        status = true;
-                        ndx = prefixTable.pPrefixEntry[i].ndx;
-                        break;
-                    }
-                }
-            }*/
 
             if (!status)
             {

