@@ -1178,7 +1178,7 @@ namespace SharpKatz.Module
             }
             Console.WriteLine("[*]");
 
-            if (ntPwdHistory != null || ntPwdHistory != null || lmPwd != null || lmPwdHistory != null)
+            if (unicodePwd != null || ntPwdHistory != null || lmPwd != null || lmPwdHistory != null)
             {
                 Console.WriteLine("[*] Credentials:");
                 if (ntPwdHistory != null)
