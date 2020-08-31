@@ -1333,12 +1333,13 @@ namespace SharpKatz.Module
 
             if (objectSid != null || samAccountName != null || unicodePwd != null || uac != null)
             {
-                string outstring = string.Format("{0}\t", objectSid);
-                outstring += string.Format("{0}\t", samAccountName);
-                outstring += string.Format("{0}\t", Utility.PrintHashBytes((byte[])unicodePwd));
-                outstring += string.Format("{0}", UacToString(Convert.ToInt32(uac)));
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "{0}\t", objectSid);
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "{0}\t", samAccountName);
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "{0}\t", Utility.PrintHashBytes((byte[])unicodePwd));
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "{0}", UacToString(Convert.ToInt32(uac)));
 
-                sw.WriteLine(outstring);
+                sw.WriteLine(sb.ToString());
             }
 
             sw.Close();
