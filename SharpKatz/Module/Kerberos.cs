@@ -514,9 +514,13 @@ namespace SharpKatz.Module
                 
                 Logon currentlogon = logonlist.FirstOrDefault(x => x.LogonId.HighPart == luid.HighPart && x.LogonId.LowPart == luid.LowPart);
 
-                if (currentlogon.KerberosKeys == null)
-                    currentlogon.KerberosKeys = new List<KerberosKey>();
-                currentlogon.KerberosKeys.Add(kkey);
+                if (currentlogon != null)
+                {
+                    if (currentlogon.KerberosKeys == null)
+                        currentlogon.KerberosKeys = new List<KerberosKey>();
+
+                    currentlogon.KerberosKeys.Add(kkey);
+                }
             }
         }
 
