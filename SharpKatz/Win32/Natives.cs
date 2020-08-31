@@ -1622,7 +1622,7 @@ namespace SharpKatz.Win32
         {
             IntPtr proc = GetProcAddress(GetNtDll(), "NtFilterToken");
             SysCall.Delegates.NtFilterToken NtSetInformationToken = (SysCall.Delegates.NtFilterToken)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NtFilterToken));
-            return NtFilterToken(TokenHandle, Flags, SidsToDisable, PrivilegesToDelete, RestrictedSids, ref hToken);
+            return NtSetInformationToken(TokenHandle, Flags, SidsToDisable, PrivilegesToDelete, RestrictedSids, ref hToken);
         }
 
         public static bool UpdateProcThreadAttribute(IntPtr lpAttributeList, uint dwFlags, IntPtr Attribute, IntPtr lpValue, IntPtr cbSize, IntPtr lpPreviousValue, IntPtr lpReturnSize)
