@@ -995,10 +995,16 @@ namespace SharpKatz.Module
         {
             if (data.Length < 16)
                 return null;
-            MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
-            md5.TransformBlock(SessionKey, 0, SessionKey.Length, SessionKey, 0);
-            md5.TransformFinalBlock(data, 0, 16);
-            byte[] key = md5.Hash;
+
+            byte[] key;
+
+            using (MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider())
+            {
+                md5.TransformBlock(SessionKey, 0, SessionKey.Length, SessionKey, 0);
+                md5.TransformFinalBlock(data, 0, 16);
+                key = md5.Hash;
+            }
+
             byte[] todecrypt = new byte[data.Length - 16];
             Array.Copy(data, 16, todecrypt, 0, data.Length - 16);
             CRYPTO_BUFFER todecryptBuffer = GetCryptoBuffer(todecrypt);

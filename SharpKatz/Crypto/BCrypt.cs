@@ -68,53 +68,65 @@ namespace SharpKatz.Crypto
             {
                 // If suited to AES, lsasrv uses AES in CFB mode
                 BCryptOpenAlgorithmProvider(out hProvider, BCRYPT_AES_ALGORITHM, null, 0);
-                BCryptSetProperty(hProvider, BCRYPT_CHAINING_MODE, BCRYPT_CHAIN_MODE_CFB, BCRYPT_CHAIN_MODE_CFB.Length, 0);
-
-                GCHandle pkeypinnedArray = GCHandle.Alloc(aeskey, GCHandleType.Pinned);
-                IntPtr pkey = pkeypinnedArray.AddrOfPinnedObject();
-
-                GCHandle pencrypedPasspinnedArray = GCHandle.Alloc(encrypedPass, GCHandleType.Pinned);
-                IntPtr pencrypedPass = pencrypedPasspinnedArray.AddrOfPinnedObject();
-
-                GCHandle pinitializationVectorpinnedArray = GCHandle.Alloc(initializationVector, GCHandleType.Pinned);
-                IntPtr pinitializationVector = pinitializationVectorpinnedArray.AddrOfPinnedObject();
-
-                GCHandle ppassDecryptedinnedArray = GCHandle.Alloc(passDecrypted, GCHandleType.Pinned);
-                IntPtr ppassDecrypted = ppassDecryptedinnedArray.AddrOfPinnedObject();
-
-                BCryptGenerateSymmetricKey(hProvider, out hAes, IntPtr.Zero, 0, pkey, aeskey.Length, 0);
-                status = (NTSTATUS)BCryptDecrypt(hAes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, IV.Length, ppassDecrypted, passDecrypted.Length, out result, 0);
-                if (status != 0)
+                
+                using (hProvider)
                 {
-                    return null;
-                }
+                    BCryptSetProperty(hProvider, BCRYPT_CHAINING_MODE, BCRYPT_CHAIN_MODE_CFB, BCRYPT_CHAIN_MODE_CFB.Length, 0);
 
+                    GCHandle pkeypinnedArray = GCHandle.Alloc(aeskey, GCHandleType.Pinned);
+                    IntPtr pkey = pkeypinnedArray.AddrOfPinnedObject();
+
+                    GCHandle pencrypedPasspinnedArray = GCHandle.Alloc(encrypedPass, GCHandleType.Pinned);
+                    IntPtr pencrypedPass = pencrypedPasspinnedArray.AddrOfPinnedObject();
+
+                    GCHandle pinitializationVectorpinnedArray = GCHandle.Alloc(initializationVector, GCHandleType.Pinned);
+                    IntPtr pinitializationVector = pinitializationVectorpinnedArray.AddrOfPinnedObject();
+
+                    GCHandle ppassDecryptedinnedArray = GCHandle.Alloc(passDecrypted, GCHandleType.Pinned);
+                    IntPtr ppassDecrypted = ppassDecryptedinnedArray.AddrOfPinnedObject();
+
+                    BCryptGenerateSymmetricKey(hProvider, out hAes, IntPtr.Zero, 0, pkey, aeskey.Length, 0);
+                    using (hAes)
+                    {
+                        status = (NTSTATUS)BCryptDecrypt(hAes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, IV.Length, ppassDecrypted, passDecrypted.Length, out result, 0);
+                        if (status != 0)
+                        {
+                            return null;
+                        }
+                    }
+                }
             }
             else
             {
                 // If suited to 3DES, lsasrv uses 3DES in CBC mode
                 BCryptOpenAlgorithmProvider(out hDesProvider, BCRYPT_3DES_ALGORITHM, null, 0);
-                BCryptSetProperty(hDesProvider, BCRYPT_CHAINING_MODE, BCRYPT_CHAIN_MODE_CBC, BCRYPT_CHAIN_MODE_CBC.Length, 0);
 
-                GCHandle pkeypinnedArray = GCHandle.Alloc(deskey, GCHandleType.Pinned);
-                IntPtr pkey = pkeypinnedArray.AddrOfPinnedObject();
-
-                GCHandle pencrypedPasspinnedArray = GCHandle.Alloc(encrypedPass, GCHandleType.Pinned);
-                IntPtr pencrypedPass = pencrypedPasspinnedArray.AddrOfPinnedObject();
-
-                GCHandle pinitializationVectorpinnedArray = GCHandle.Alloc(initializationVector, GCHandleType.Pinned);
-                IntPtr pinitializationVector = pinitializationVectorpinnedArray.AddrOfPinnedObject();
-
-                GCHandle ppassDecryptedinnedArray = GCHandle.Alloc(passDecrypted, GCHandleType.Pinned);
-                IntPtr ppassDecrypted = ppassDecryptedinnedArray.AddrOfPinnedObject();
-
-                BCryptGenerateSymmetricKey(hDesProvider, out hDes, IntPtr.Zero, 0, pkey, deskey.Length, 0);
-                status = (NTSTATUS)BCryptDecrypt(hDes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, 8, ppassDecrypted, passDecrypted.Length, out result, 0);
-                if (status != 0)
+                using (hDesProvider)
                 {
-                    return null;
+                    BCryptSetProperty(hDesProvider, BCRYPT_CHAINING_MODE, BCRYPT_CHAIN_MODE_CBC, BCRYPT_CHAIN_MODE_CBC.Length, 0);
+
+                    GCHandle pkeypinnedArray = GCHandle.Alloc(deskey, GCHandleType.Pinned);
+                    IntPtr pkey = pkeypinnedArray.AddrOfPinnedObject();
+
+                    GCHandle pencrypedPasspinnedArray = GCHandle.Alloc(encrypedPass, GCHandleType.Pinned);
+                    IntPtr pencrypedPass = pencrypedPasspinnedArray.AddrOfPinnedObject();
+
+                    GCHandle pinitializationVectorpinnedArray = GCHandle.Alloc(initializationVector, GCHandleType.Pinned);
+                    IntPtr pinitializationVector = pinitializationVectorpinnedArray.AddrOfPinnedObject();
+
+                    GCHandle ppassDecryptedinnedArray = GCHandle.Alloc(passDecrypted, GCHandleType.Pinned);
+                    IntPtr ppassDecrypted = ppassDecryptedinnedArray.AddrOfPinnedObject();
+
+                    BCryptGenerateSymmetricKey(hDesProvider, out hDes, IntPtr.Zero, 0, pkey, deskey.Length, 0);
+                    using (hDes)
+                    {
+                        status = (NTSTATUS)BCryptDecrypt(hDes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, 8, ppassDecrypted, passDecrypted.Length, out result, 0);
+                        if (status != 0)
+                        {
+                            return null;
+                        }
+                    }
                 }
-                
             }
             
             Array.Resize(ref passDecrypted, result );

@@ -1,4 +1,4 @@
-//
+﻿//
 // Author: B4rtik (@b4rtik)
 // Project: SharpKatz (https://github.com/b4rtik/SharpKatz)
 // License: BSD 3-Clause
@@ -187,8 +187,8 @@ namespace SharpKatz
                 Console.WriteLine("[!] {0} will be the domain", domain);
                 if (string.IsNullOrEmpty(dc))
                 {
-                    DirectoryEntry rootdse = new DirectoryEntry("LDAP://RootDSE");
-                    dc = (string)rootdse.Properties["dnshostname"].Value;
+                    using (DirectoryEntry rootdse = new DirectoryEntry("LDAP://RootDSE"))
+                        dc = (string)rootdse.Properties["dnshostname"].Value;
                 }
                 Console.WriteLine("[!] {0} will be the DC server", dc);
                 string alt_service = "ldap";
