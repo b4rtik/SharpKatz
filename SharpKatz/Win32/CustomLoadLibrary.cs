@@ -100,7 +100,7 @@ namespace SharpKatz.Win32
             ProcessModuleCollection ProcModules = Process.GetCurrentProcess().Modules;
             foreach (ProcessModule Mod in ProcModules)
             {
-                if (Mod.FileName.ToLower().EndsWith(DLLName.ToLower()))
+                if (Mod.FileName.EndsWith(DLLName, StringComparison.OrdinalIgnoreCase))
                 {
                     return Mod.BaseAddress;
                 }
@@ -108,6 +108,7 @@ namespace SharpKatz.Win32
 
             return IntPtr.Zero;
         }
+
         /// <summary>
         /// Given a module base address, resolve the address of a function by manually walking the module export table.
         /// </summary>
