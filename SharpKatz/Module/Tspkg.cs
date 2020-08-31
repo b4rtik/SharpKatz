@@ -150,15 +150,7 @@ namespace SharpKatz.Module
                 {
 
                     Credential.Tspkg krbrentry = new Credential.Tspkg();
-
-                    if (!string.IsNullOrEmpty(username))
-                    {
-                        krbrentry.UserName = username;
-                    }
-                    else
-                    {
-                        krbrentry.UserName = "[NULL]";
-                    }
+                    krbrentry.UserName = username;
 
                     if (!string.IsNullOrEmpty(domain))
                     {

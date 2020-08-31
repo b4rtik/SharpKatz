@@ -401,16 +401,8 @@ namespace SharpKatz.Module
             {
 
                 Credential.Kerberos krbrentry = new Credential.Kerberos();
-
-                if (!string.IsNullOrEmpty(username))
-                {
-                    krbrentry.UserName = username;
-                }
-                else
-                {
-                    krbrentry.UserName = "[NULL]";
-                }
-
+                krbrentry.UserName = username;
+              
                 if (!string.IsNullOrEmpty(domain))
                 {
                     krbrentry.DomainName = domain;

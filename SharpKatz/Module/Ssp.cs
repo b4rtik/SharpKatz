@@ -74,15 +74,8 @@ namespace SharpKatz.Module
                     LUID luid = entry.LogonId;
 
                     Credential.Ssp sspentry = new Credential.Ssp();
-                    sspentry.Reference = reference;
-                    if (!string.IsNullOrEmpty(username))
-                    {
-                        sspentry.UserName = username;
-                    }
-                    else
-                    {
-                        sspentry.UserName = "[NULL]";
-                    }
+                    sspentry.Reference = reference; 
+                    sspentry.UserName = username;
 
                     if (!string.IsNullOrEmpty(domain))
                     {
