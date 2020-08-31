@@ -8,6 +8,7 @@ using SharpKatz.Credential;
 using SharpKatz.Crypto;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -573,14 +574,13 @@ namespace SharpKatz.Module
 
             StringBuilder sb = new StringBuilder();
 
-            sb.Append(string.Format("\n\t   * LSA Isolated Data: %.*S", blob.typeSize, Marshal.PtrToStringAuto(pntData)));
-
-            sb.Append(string.Format("\n\t     Unk-Key  : {0}",Utility.PrintHexBytes(unkKeyData)));
-            sb.Append(string.Format("\n\t     Encrypted: ",Utility.PrintHexBytes(encrypted)));
-            sb.Append(string.Format("\n\t\t   SS:{0}, TS:{1}, DS:{2}", blob.structSize, blob.typeSize, blob.origSize));
-            sb.Append(string.Format("\n\t\t   0:0x%x, 1:0x{0:X}, 2:0x{1:X}, 3:0x{2:X}, 4:0x{3:X}, E:", blob.unk0, blob.unk1, blob.unk2, blob.unk3, blob.unk4));
-            sb.Append(string.Format(Utility.PrintHexBytes(unkData2)));
-            sb.Append(string.Format(", 5:0x{0:X}", blob.unk5));
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, "\n\t   * LSA Isolated Data: {0}", Marshal.PtrToStringAuto(pntData));
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, "\n\t     Unk-Key  : {0}", Utility.PrintHexBytes(unkKeyData));
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, "\n\t     Encrypted: {0}", Utility.PrintHexBytes(encrypted));
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, "\n\t\t   SS:{0}, TS:{1}, DS:{2}", blob.structSize, blob.typeSize, blob.origSize);
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, "\n\t\t   0:0x{0:X}, 1:0x{1:X}, 2:0x{2:X}, 3:0x{3:X}, 4:0x{4:X}, E:", blob.unk0, blob.unk1, blob.unk2, blob.unk3, blob.unk4);
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, Utility.PrintHexBytes(unkData2));
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, ", 5:0x{0:X}", blob.unk5);
 
             pntDataPinnedArray.Free();
             pntUnkData2PinnedArray.Free();
@@ -601,9 +601,9 @@ namespace SharpKatz.Module
 
             StringBuilder sb = new StringBuilder();
 
-            sb.Append(string.Format("\n\t   * unkData1 : {0}", Utility.PrintHexBytes(unkData1)));
-            sb.Append(string.Format("\n\t     unkData2 : {0}", Utility.PrintHexBytes(unkData2)));
-            sb.Append(string.Format("\n\t     Encrypted: {0}", Utility.PrintHexBytes(encrypted)));
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, "\n\t   * unkData1 : {0}", Utility.PrintHexBytes(unkData1));
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, "\n\t     unkData2 : {0}", Utility.PrintHexBytes(unkData2));
+            sb.AppendFormat(NumberFormatInfo.InvariantInfo, "\n\t     Encrypted: {0}", Utility.PrintHexBytes(encrypted));
 
             return sb.ToString();
         }
