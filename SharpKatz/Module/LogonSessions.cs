@@ -78,7 +78,7 @@ namespace SharpKatz.Module
 
                 do
                 {
-                    byte[] listentryBytes = Utility.ReadFromLsass(ref hLsass, pList, Convert.ToUInt64(oshelper.ListTypeSize));
+                    byte[] listentryBytes = Utility.ReadFromLsass(ref hLsass, pList, oshelper.ListTypeSize);
 
                     GCHandle pinnedArray = GCHandle.Alloc(listentryBytes, GCHandleType.Pinned);
                     IntPtr listentry = pinnedArray.AddrOfPinnedObject();

