@@ -6,6 +6,7 @@
 
 using Microsoft.Win32.SafeHandles;
 using System;
+using System.Linq;
 using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
 using System.Security;
@@ -91,7 +92,7 @@ namespace SharpKatz.Crypto
                         status = (NTSTATUS)BCryptDecrypt(hAes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, IV.Length, ppassDecrypted, passDecrypted.Length, out result, 0);
                         if (status != 0)
                         {
-                            return Array.Empty<byte>();
+                            return new byte[0];
                         }
                     }
                 }
@@ -123,7 +124,7 @@ namespace SharpKatz.Crypto
                         status = (NTSTATUS)BCryptDecrypt(hDes, pencrypedPass, encrypedPass.Length, IntPtr.Zero, pinitializationVector, 8, ppassDecrypted, passDecrypted.Length, out result, 0);
                         if (status != 0)
                         {
-                            return Array.Empty<byte>();
+                            return new byte[0];
                         }
                     }
                 }
@@ -174,7 +175,7 @@ namespace SharpKatz.Crypto
                         status = (NTSTATUS)BCryptEncrypt(hAes, ppassDecrypted, passDecrypted.Length, IntPtr.Zero, pinitializationVector, IV.Length, pencrypedPass, encrypedPass.Length, out result, 0);
                         if (status != 0)
                         {
-                            return Array.Empty<byte>();
+                            return new byte[0];
                         }
                     }
                 }
@@ -205,7 +206,7 @@ namespace SharpKatz.Crypto
                         status = (NTSTATUS)BCryptEncrypt(hDes, ppassDecrypted, passDecrypted.Length, IntPtr.Zero, pinitializationVector, 8, pencrypedPass, encrypedPass.Length, out result, 0);
                         if (status != 0)
                         {
-                            return Array.Empty<byte>();
+                            return new byte[0];
                         }
                     }
                 }

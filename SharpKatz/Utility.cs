@@ -126,7 +126,7 @@ namespace SharpKatz
                 throw new ArgumentException($"{bytesToRead} is not a valid number of bytes to read");
 
             if (bytesToRead == 0)
-                return Array.Empty<byte>();
+                return new byte[0];
 
             int bytesRead = 0;
             byte[] bytev = new byte[bytesToRead];
