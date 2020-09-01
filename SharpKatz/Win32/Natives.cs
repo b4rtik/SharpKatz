@@ -1769,7 +1769,7 @@ namespace SharpKatz.Win32
         public static int NtFilterToken(IntPtr TokenHandle, uint Flags, IntPtr SidsToDisable, IntPtr PrivilegesToDelete, IntPtr RestrictedSids, ref IntPtr hToken)
         {
             IntPtr proc = GetProcAddress(GetNtDll(), "NtFilterToken");
-            SysCall.Delegates.NtFilterToken NtSetInformationToken = (SysCall.Delegates.NtFilterToken)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NtFilterToken));
+            SysCall.Delegates.NtFilterToken NtFilterToken = (SysCall.Delegates.NtFilterToken)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NtFilterToken));
             return NtFilterToken(TokenHandle, Flags, SidsToDisable, PrivilegesToDelete, RestrictedSids, ref hToken);
         }
 

