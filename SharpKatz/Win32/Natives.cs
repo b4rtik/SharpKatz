@@ -1019,6 +1019,9 @@ namespace SharpKatz.Win32
             }
         }
 
+        public static int LOGON32_LOGON_NEW_CREDENTIALS = 9;
+        public static int LOGON32_PROVIDER_WINNT50 = 3;
+
         /// <summary>
         /// x64
         /// </summary>
@@ -1329,6 +1332,63 @@ namespace SharpKatz.Win32
             public IntPtr elements;//Byte *
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct QUOTA_LIMITS {
+            UInt64 PagedPoolLimit;
+            UInt64 NonPagedPoolLimit;
+            UInt64 MinimumWorkingSetSize;
+            UInt64 MaximumWorkingSetSize;
+            UInt64 PagefileLimit;
+            LARGE_INTEGER TimeLimit;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct TOKEN_SOURCE
+        {
+            private const int TOKEN_SOURCE_LENGTH = 8;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = TOKEN_SOURCE_LENGTH)]
+            public byte[] Name;
+            public LUID SourceIdentifier;
+        }
+
+        public  enum MSV1_0_LOGON_SUBMIT_TYPE
+        {
+            MsV1_0InteractiveLogon = 2,
+            MsV1_0Lm20Logon,
+            MsV1_0NetworkLogon,
+            MsV1_0SubAuthLogon,
+            MsV1_0WorkstationUnlockLogon,
+            MsV1_0S4ULogon,
+            MsV1_0VirtualLogon,
+            MsV1_0NoElevationLogon,
+            MsV1_0LuidLogon
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct MSV1_0_INTERACTIVE_LOGON {
+            public MSV1_0_LOGON_SUBMIT_TYPE MessageType;
+            public UNICODE_STRING LogonDomainName;
+            public UNICODE_STRING UserName;
+            public UNICODE_STRING Password;
+        }
+
+        public enum SECURITY_LOGON_TYPE
+        {
+            UndefinedLogonType = 1,
+            Interactive,
+            Network,
+            Batch,
+            Service,
+            Proxy,
+            Unlock,
+            NetworkCleartext,
+            NewCredentials,
+            RemoteInteractive,
+            CachedInteractive,
+            CachedRemoteInteractive,
+            CachedUnlock
+        }
+
         //DCSync author LE TOUX (vincent.letoux@mysmartlogon.com)
         //https://raw.githubusercontent.com/vletoux/MakeMeEnterpriseAdmin/master/MakeMeEnterpriseAdmin.ps1
         [StructLayout(LayoutKind.Sequential)]
@@ -1363,7 +1423,7 @@ namespace SharpKatz.Win32
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        private struct GENERIC_BINDING_ROUTINE_PAIR
+        public struct GENERIC_BINDING_ROUTINE_PAIR
         {
             public IntPtr Bind;
             public IntPtr Unbind;
@@ -1426,6 +1486,81 @@ namespace SharpKatz.Win32
             public IntPtr ProxyServerInfo;
             public IntPtr /*NDR_EXPR_DESC*/ pExprInfo;
             // Fields up to now present in win2000 release.
+        }
+
+        public enum NETLOGON_SECURE_CHANNEL_TYPE
+        {
+            NullSecureChannel = 0,
+            MsvApSecureChannel = 1,
+            WorkstationSecureChannel = 2,
+            TrustedDnsDomainSecureChannel = 3,
+            TrustedDomainSecureChannel = 4,
+            UasServerSecureChannel = 5,
+            ServerSecureChannel = 6,
+            CdcServerSecureChannel = 7
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct NETLOGON_AUTHENTICATOR
+        {
+            public NETLOGON_CREDENTIAL Credential;
+            public uint Timestamp;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct NETLOGON_CREDENTIAL
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 8)]
+            public byte[] data;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct NL_TRUST_PASSWORD
+        {
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 512)]
+            public byte[] Buffer;
+            public uint Length;
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        public struct SEC_WINNT_AUTH_IDENTITY_W
+        {
+            public string User;
+            public int UserLength;
+            public string Domain;
+            public int DomainLength;
+            public string Password;
+            public int PasswordLength;
+            public int Flags; //2 Uni
+        }
+
+        /*[StructLayout(LayoutKind.Sequential)]
+        public struct RPC_CLIENT_INTERFACE
+        {
+            uint Length;
+            RPC_SYNTAX_IDENTIFIER InterfaceId;
+            RPC_SYNTAX_IDENTIFIER TransferSyntax;
+            RPC_DISPATCH_TABLE DispatchTable; //RPC_DISPATCH_TABLE
+            uint RpcProtseqEndpointCount;
+            IntPtr RpcProtseqEndpoint;//RPC_PROTSEQ_ENDPOINT
+            uint Reserved;
+            IntPtr InterpreterInfo;
+            uint Flags;
+        }*/
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RPC_DISPATCH_TABLE
+        {
+            uint DispatchTableCount;
+            IntPtr DispatchTable;//RPC_DISPATCH_FUNCTION
+            int Reserved;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RPC_PROTSEQ_ENDPOINT
+        {
+            IntPtr RpcProtocolSequence;
+            IntPtr Endpoint;
         }
 
         #region RPC structures
@@ -1822,6 +1957,13 @@ namespace SharpKatz.Win32
             RtlInitUnicodeString(ref DestinationString, SourceString);
         }
 
+        public static void RtlInitString(ref Natives.UNICODE_STRING DestinationString, [MarshalAs(UnmanagedType.LPStr)] string SourceString)
+        {
+            IntPtr proc = GetProcAddress(GetNtDll(), "RtlInitString");
+            SysCall.Delegates.RtlInitString RtlInitString = (SysCall.Delegates.RtlInitString)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RtlInitString));
+            RtlInitString(ref DestinationString, SourceString);
+        }
+
         public static bool GetTokenInformation(IntPtr TokenHandle, TOKEN_INFORMATION_CLASS TokenInformationClass, IntPtr TokenInformation, UInt32 TokenInformationLength, out UInt32 ReturnLength)
         {
             IntPtr proc = GetProcAddress(GetKernelbase(), "GetTokenInformation");
@@ -1946,6 +2088,12 @@ namespace SharpKatz.Win32
             return RpcBindingSetOption(Binding, Option, OptionValue);
         }
 
+        public static int RpcEpResolveBinding(IntPtr Binding, IntPtr IfSpec)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "RpcEpResolveBinding");
+            SysCall.Delegates.RpcEpResolveBinding RpcEpResolveBinding = (SysCall.Delegates.RpcEpResolveBinding)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcEpResolveBinding));
+            return RpcEpResolveBinding(Binding, IfSpec);
+        }
 
         public static int RtlDecryptDES2blocks1DWORD(byte[] data, ref UInt32 key, IntPtr output)
         {
@@ -1987,9 +2135,9 @@ namespace SharpKatz.Win32
             return CustomLoadLibrary.GetExportAddress(hModule, procName);
         }
 
-        public static IntPtr LoadLibrary(string name, bool conloadfromdisk = true)
+        public static IntPtr LoadLibrary(string name, bool canloadfromdisk = true)
         {
-            return CustomLoadLibrary.GetDllAddress(name, conloadfromdisk);
+            return CustomLoadLibrary.GetDllAddress(name, canloadfromdisk);
         }
 
         public static int BCryptCloseAlgorithmProvider(IntPtr hAlgorithm, int flags)
@@ -2131,5 +2279,53 @@ namespace SharpKatz.Win32
             SysCall.Delegates.NtTerminateProcess NtTerminateProcess = (SysCall.Delegates.NtTerminateProcess)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NtTerminateProcess));
             return NtTerminateProcess( hProcess,  uExitCode);
         }
+
+        public static uint NetrServerReqChallenge(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr PrimaryName, IntPtr ComputerName, IntPtr ClientChallenge, out NETLOGON_CREDENTIAL ServerChallenge)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+
+            SysCall.Delegates.NetrServerReqChallenge NetrServerReqChallenge = (SysCall.Delegates.NetrServerReqChallenge)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NetrServerReqChallenge));
+            return NetrServerReqChallenge(pMIDL_STUB_DESC, formatString, PrimaryName,  ComputerName,  ClientChallenge, out  ServerChallenge);
+        }
+
+        public static uint NetrServerAuthenticate3(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr PrimaryName, IntPtr AccountName, NETLOGON_SECURE_CHANNEL_TYPE SecoureChannelType, IntPtr ComputerName, IntPtr ClientChallenge, out NETLOGON_CREDENTIAL ServerChallenge, out uint NegotiateFlags, out uint AccountRid)
+        {
+
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+
+            SysCall.Delegates.NetrServerAuthenticate3 NetrServerAuthenticate3 = (SysCall.Delegates.NetrServerAuthenticate3)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NetrServerAuthenticate3));
+            return NetrServerAuthenticate3(pMIDL_STUB_DESC, formatString, PrimaryName,  AccountName,  SecoureChannelType,  ComputerName,  ClientChallenge, out  ServerChallenge, out  NegotiateFlags, out  AccountRid);
+        }
+
+        public static uint NetServerPasswordSet2(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr PrimaryName, IntPtr AccountName, NETLOGON_SECURE_CHANNEL_TYPE AccountType, IntPtr ComputerName, IntPtr Authenticator, IntPtr ReturnAuthenticator, IntPtr ClearNewPassword)
+        {
+
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+
+            SysCall.Delegates.NetServerPasswordSet2 NetServerPasswordSet2 = (SysCall.Delegates.NetServerPasswordSet2)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NetServerPasswordSet2));
+            return NetServerPasswordSet2(pMIDL_STUB_DESC, formatString, PrimaryName,  AccountName,  AccountType,  ComputerName,  Authenticator,  ReturnAuthenticator,  ClearNewPassword);
+        }
+
+        public static bool LogonUser(string pszUserName, string pszDomain, string pszPassword, int dwLogonType, int dwLogonProvider, ref IntPtr phToken)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "LogonUserA");
+            SysCall.Delegates.LogonUser LogonUser = (SysCall.Delegates.LogonUser)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.LogonUser));
+            return LogonUser( pszUserName,  pszDomain,  pszPassword,  dwLogonType,  dwLogonProvider, ref  phToken);
+        }
+
+        public static bool RevertToSelf()
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "RevertToSelf");
+            SysCall.Delegates.RevertToSelf RevertToSelf = (SysCall.Delegates.RevertToSelf)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RevertToSelf));
+            return RevertToSelf();
+        }
+
+        public static bool ImpersonateLoggedOnUser(IntPtr hToken)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "ImpersonateLoggedOnUser");
+            SysCall.Delegates.ImpersonateLoggedOnUser ImpersonateLoggedOnUser = (SysCall.Delegates.ImpersonateLoggedOnUser)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ImpersonateLoggedOnUser));
+            return ImpersonateLoggedOnUser(hToken);
+        }
+
     }
 }

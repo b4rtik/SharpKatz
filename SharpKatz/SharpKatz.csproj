@@ -69,6 +69,7 @@
     <Compile Include="Module\Tspkg.cs" />
     <Compile Include="Module\Kerberos.cs" />
     <Compile Include="Module\Ssp.cs" />
+    <Compile Include="Module\Zerologon.cs" />
     <Compile Include="WinBuild\IWinBuild.cs" />
     <Compile Include="WinBuild\WinBuild1607.cs" />
     <Compile Include="WinBuild\WinBuild1511.cs" />

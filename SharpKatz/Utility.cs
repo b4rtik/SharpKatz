@@ -285,6 +285,18 @@ namespace SharpKatz
             return bytes;
         }
 
+        public static byte[] StructToBytes<T>( T str)
+        {
+            int size = Marshal.SizeOf(str);
+            byte[] arr = new byte[size];
+
+            IntPtr ptr = Marshal.AllocHGlobal(size);
+            Marshal.StructureToPtr(str, ptr, true);
+            Marshal.Copy(ptr, arr, 0, size);
+            Marshal.FreeHGlobal(ptr);
+            return arr;
+        }
+
         private static DateTime ToDateTime(FILETIME time)
         {
             long fileTime = (((long)time.dwHighDateTime) << 32) | ((uint)time.dwLowDateTime);

