@@ -51,7 +51,11 @@ namespace SharpKatz.Win32
                 hModule = LoadModuleFromDisk(DLLName);
                 if (hModule == IntPtr.Zero)
                 {
-                    throw new FileNotFoundException(DLLName + ", unable to find the specified file.");
+                    hModule = LoadModuleFromDisk(@"C:\Windows\System32\" + DLLName);
+                    if (hModule == IntPtr.Zero)
+                    {
+                        throw new FileNotFoundException(DLLName + ", unable to find the specified file.");
+                    }
                 }
             }
             else if (hModule == IntPtr.Zero)
