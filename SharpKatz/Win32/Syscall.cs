@@ -363,7 +363,19 @@ namespace SharpKatz.Win32
 
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]
+            public delegate int RpcBindingSetObject(IntPtr Binding, ref Guid val);
+
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.StdCall)]
             public delegate int RpcEpResolveBinding(IntPtr Binding, IntPtr IfSpec);
+
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
+            public delegate IntPtr RpcAsyncEnumPrinterDrivers(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr hBinding, StringBuilder pName, string pEnvironment, uint level, IntPtr drivers, uint cbBuf, ref uint pcbNeeded, ref uint pcReturned);
+
+            [SuppressUnmanagedCodeSecurity]
+            [UnmanagedFunctionPointer(CallingConvention.StdCall, CharSet = CharSet.Unicode)]
+            public delegate IntPtr RpcAsyncAddPrinterDriver(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr hBinding, StringBuilder pName, IntPtr pDriverContainer, uint dwFileCopyFlags);
 
             [SuppressUnmanagedCodeSecurity]
             [UnmanagedFunctionPointer(CallingConvention.StdCall)]

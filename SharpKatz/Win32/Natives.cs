@@ -515,6 +515,7 @@ namespace SharpKatz.Win32
             AlreadyCommitted = 0xc0000021,
             AccessDenied = 0xc0000022,
             BufferTooSmall = 0xc0000023,
+            InsufficientBuffer = 0x7a,
             ObjectTypeMismatch = 0xc0000024,
             NonContinuableException = 0xc0000025,
             BadStack = 0xc0000028,
@@ -1789,6 +1790,40 @@ namespace SharpKatz.Win32
         }
         #endregion
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DRIVER_CONTAINER
+        {
+            public uint Level;
+            public IntPtr DriverInfo;//DRIVER_INFO_2
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct _DRIVER_INFO_2
+        {
+            public uint cVersion;
+            public uint NameOffset;
+            public uint EnvironmentOffset;
+            public uint DriverPathOffset;
+            public uint DataFileOffset;
+            public uint ConfigFileOffset;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct DRIVER_INFO_2
+        {
+            public uint cVersion;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string pName;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string pEnvironment;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string pDriverPath;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string pDataFile;
+            [MarshalAs(UnmanagedType.LPWStr)]
+            public string pConfigFile;        
+        }
+
         public static IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId)
         {
             Natives.CLIENT_ID clientid = new Natives.CLIENT_ID();
@@ -2060,6 +2095,22 @@ namespace SharpKatz.Win32
 
         }
 
+        public static IntPtr RpcAsyncEnumPrinterDrivers(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr hBinding, StringBuilder pName,  string pEnvironment, uint level, IntPtr drivers, uint cbBuf, ref uint pcbNeeded, ref uint pcReturned)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+            SysCall.Delegates.RpcAsyncEnumPrinterDrivers RpcAsyncEnumPrinterDrivers = (SysCall.Delegates.RpcAsyncEnumPrinterDrivers)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcAsyncEnumPrinterDrivers));
+            return RpcAsyncEnumPrinterDrivers(pMIDL_STUB_DESC, formatString, hBinding,  pName,  pEnvironment,  level,  drivers,  cbBuf, ref  pcbNeeded, ref  pcReturned);
+
+        }
+
+        public static IntPtr RpcAsyncAddPrinterDriver(IntPtr pMIDL_STUB_DESC, IntPtr formatString, IntPtr hBinding, StringBuilder pName, IntPtr pDriverContainer, uint dwFileCopyFlags)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "NdrClientCall2");
+            SysCall.Delegates.RpcAsyncAddPrinterDriver RpcAsyncAddPrinterDriver = (SysCall.Delegates.RpcAsyncAddPrinterDriver)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcAsyncAddPrinterDriver));
+            return RpcAsyncAddPrinterDriver(pMIDL_STUB_DESC, formatString, hBinding,  pName, pDriverContainer,  dwFileCopyFlags);
+
+        }
+
         public static int I_RpcBindingInqSecurityContext(IntPtr Binding, out IntPtr SecurityContextHandle)
         {
             IntPtr proc = GetProcAddress(GetRpcrt4(), "I_RpcBindingInqSecurityContext");
@@ -2086,6 +2137,13 @@ namespace SharpKatz.Win32
             IntPtr proc = GetProcAddress(GetRpcrt4(), "RpcBindingSetOption");
             SysCall.Delegates.RpcBindingSetOption RpcBindingSetOption = (SysCall.Delegates.RpcBindingSetOption)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcBindingSetOption));
             return RpcBindingSetOption(Binding, Option, OptionValue);
+        }
+
+        public static int RpcBindingSetObject(IntPtr Binding,ref Guid val)
+        {
+            IntPtr proc = GetProcAddress(GetRpcrt4(), "RpcBindingSetObject");
+            SysCall.Delegates.RpcBindingSetObject RpcBindingSetObject = (SysCall.Delegates.RpcBindingSetObject)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RpcBindingSetObject));
+            return RpcBindingSetObject(Binding, ref val);
         }
 
         public static int RpcEpResolveBinding(IntPtr Binding, IntPtr IfSpec)

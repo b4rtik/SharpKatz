@@ -45,6 +45,11 @@ namespace SharpKatz.Module
         const int RPC_C_AUTHN_LEVEL_PKT_PRIVACY = 6;
         const int RPC_C_OPT_SECURITY_CALLBACK = 10;
 
+        const uint RPC_C_QOS_CAPABILITIES_IGNORE_DELEGATE_FAILURE = 0x8;
+        const uint RPC_C_QOS_CAPABILITIES_MUTUAL_AUTH = 0x1;
+
+        public const uint RPC_C_IMP_LEVEL_DELEGATE = 0x4;
+
         public const int RPC_C_AUTHN_WINNT = 10;
         public const int RPC_C_AUTHN_GSS_NEGOTIATE = 9;
         public const int RPC_C_AUTHN_GSS_KERBEROS = 16;
@@ -518,13 +523,13 @@ namespace SharpKatz.Module
             }
         }
 
-        public static IntPtr CreateBinding(string dc, string altservice, int rpcAuth, string authuser = null, string authdomain = null, string authpassword =null, bool forcentlm = false, bool nullsession = false)
+        public static IntPtr CreateBinding(string dc, string altservice, int rpcAuth, string authuser = null, string authdomain = null, string authpassword =null, bool forcentlm = false, bool nullsession = false, string protseq = "ncacn_ip_tcp",string endpoint = null, uint impersonationType = 0)
         {
             IntPtr pStringBinding;
             IntPtr hBinding = IntPtr.Zero;
             NTSTATUS rpcStatus;
 
-            rpcStatus = (NTSTATUS)RpcStringBindingCompose(null, "ncacn_ip_tcp", dc, null, null, out pStringBinding);
+            rpcStatus = (NTSTATUS)RpcStringBindingCompose(null, protseq, dc, endpoint, null, out pStringBinding);
             if (rpcStatus == NTSTATUS.Success)
             {
                 string stringBinding = Marshal.PtrToStringUni(pStringBinding);
@@ -534,7 +539,8 @@ namespace SharpKatz.Module
                 {
                     RPC_SECURITY_QOS securityqos = new RPC_SECURITY_QOS();
                     securityqos.Version = 1;
-                    securityqos.Capabilities = 1;
+                    securityqos.Capabilities = RPC_C_QOS_CAPABILITIES_MUTUAL_AUTH | ((impersonationType == RPC_C_IMP_LEVEL_DELEGATE) ? RPC_C_QOS_CAPABILITIES_IGNORE_DELEGATE_FAILURE : 0);
+                    securityqos.ImpersonationType = impersonationType;
                     GCHandle qoshandle = GCHandle.Alloc(securityqos, GCHandleType.Pinned);
 
                     IntPtr psecAuth = IntPtr.Zero;

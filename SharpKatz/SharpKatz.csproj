@@ -65,6 +65,7 @@
     <Compile Include="Module\CredMan.cs" />
     <Compile Include="Module\DCSync.cs" />
     <Compile Include="Module\LogonSessions.cs" />
+    <Compile Include="Module\PrintNightmare.cs" />
     <Compile Include="Module\Pth.cs" />
     <Compile Include="Module\Tspkg.cs" />
     <Compile Include="Module\Kerberos.cs" />
