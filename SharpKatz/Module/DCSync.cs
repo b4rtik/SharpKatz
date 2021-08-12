@@ -1266,6 +1266,11 @@ namespace SharpKatz.Module
                 Console.WriteLine("[*]");
             }
 
+            DcsyncDescrUserProperties((byte[])suppCredential);
+        }
+
+        public static void DcsyncDescrUserProperties(byte[] suppCredential)
+        {
             int offsetConunt = Utility.FieldOffset<USER_PROPERTIES>("PropertyCount");
             int offsetLenght = Utility.FieldOffset<USER_PROPERTIES>("Length");
             int offsetUserProp = Utility.FieldOffset<USER_PROPERTIES>("UserProperties");
@@ -1380,9 +1385,10 @@ namespace SharpKatz.Module
                     readedSize += offsetName + nameLength + valueLength;
                 }
             }
+
         }
 
-        public static void ExportReplicationData(Dictionary<int, object> replicationData, string path)
+    public static void ExportReplicationData(Dictionary<int, object> replicationData, string path)
         {
             Dictionary<string, object> dic;
             DecodeReplicationFields(replicationData, out dic);

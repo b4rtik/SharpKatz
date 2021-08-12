@@ -16,6 +16,7 @@ using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 using System.Text;
+using FILETIME = System.Runtime.InteropServices.ComTypes.FILETIME;
 
 namespace SharpKatz.Win32
 {
@@ -351,7 +352,7 @@ namespace SharpKatz.Win32
             public ulong Length;
             public IntPtr RootDirectory;
             public IntPtr ObjectName;
-            public ulong Attributes;
+            public uint Attributes;
             public IntPtr SecurityDescriptor;
             public IntPtr SecurityQualityOfService;
         }
@@ -1824,6 +1825,31 @@ namespace SharpKatz.Win32
             public string pConfigFile;        
         }
 
+        public enum GET_FILEEX_INFO_LEVELS
+        {
+            GetFileExInfoStandard,
+            GetFileExMaxInfoLevel
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct OBJECT_DIRECTORY_INFORMATION
+        {
+            public UNICODE_STRING Name;
+            public UNICODE_STRING TypeName;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct WIN32_FILE_ATTRIBUTE_DATA
+        {
+            uint dwFileAttributes;
+            FILETIME ftCreationTime;
+            FILETIME ftLastAccessTime;
+            public FILETIME ftLastWriteTime;
+            uint nFileSizeHigh;
+            uint nFileSizeLow;
+        }
+
+
         public static IntPtr OpenProcess(ProcessAccessFlags processAccess, bool bInheritHandle, int processId)
         {
             Natives.CLIENT_ID clientid = new Natives.CLIENT_ID();
@@ -2039,6 +2065,13 @@ namespace SharpKatz.Win32
             IntPtr proc = GetProcAddress(GetAdvapi32(), "ConvertSidToStringSidA");
             SysCall.Delegates.ConvertSidToStringSid ConvertSidToStringSid = (SysCall.Delegates.ConvertSidToStringSid)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ConvertSidToStringSid));
             return ConvertSidToStringSid(pSID, out ptrSid);
+        }
+
+        public static bool ConvertSidToStringSid(IntPtr pSID, out string ptrSid)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "ConvertSidToStringSidA");
+            SysCall.Delegates.ConvertSidToStringSid2 ConvertSidToStringSid2 = (SysCall.Delegates.ConvertSidToStringSid2)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.ConvertSidToStringSid2));
+            return ConvertSidToStringSid2(pSID, out ptrSid);
         }
 
         public static int RpcStringBindingCompose(String ObjUuid, String ProtSeq, String NetworkAddr, String Endpoint, String Options, out IntPtr lpBindingString)
@@ -2310,6 +2343,13 @@ namespace SharpKatz.Win32
             return CreateProcessWithLogonW(userName,domain,password,dwLogonFlags,applicationName,commandLine,dwCreationFlags,environment,currentDirectory,ref startupInfo,out processInformation);
         }
 
+        public static IntPtr CreateFileW(string lpFileName,uint dwDesiredAccess,uint dwShareMode,ref SECURITY_ATTRIBUTES lpSecurityAttributes,uint dwCreationDisposition,uint dwFlagsAndAttributes,IntPtr hTemplateFile)
+        {
+            IntPtr proc = GetProcAddress(GetKernelbase(), "CreateFileW");
+            SysCall.Delegates.CreateFileW CreateFileW = (SysCall.Delegates.CreateFileW)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CreateFileW));
+            return CreateFileW(lpFileName,  dwDesiredAccess,  dwShareMode, ref  lpSecurityAttributes,  dwCreationDisposition,  dwFlagsAndAttributes,  hTemplateFile);
+        }
+
         public static bool DuplicateTokenEx(IntPtr hExistingToken, uint dwDesiredAccess, ref SECURITY_ATTRIBUTES lpTokenAttributes, int ImpersonationLevel, int TokenType, ref IntPtr phNewToken)
         {
             IntPtr proc = GetProcAddress(GetKernelbase(), "DuplicateTokenEx");
@@ -2385,5 +2425,151 @@ namespace SharpKatz.Win32
             return ImpersonateLoggedOnUser(hToken);
         }
 
+        public static int RegQueryValueEx(IntPtr hKey, string lpValueName, IntPtr lpReserved, ref uint lpType, IntPtr lpData, ref uint lpcbData)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "RegQueryValueExW");
+            SysCall.Delegates.RegQueryValueEx RegQueryValueEx = (SysCall.Delegates.RegQueryValueEx)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RegQueryValueEx));
+            return RegQueryValueEx( hKey,  lpValueName,  lpReserved, ref  lpType,  lpData, ref  lpcbData);
+        }
+
+        public static int RegOpenKeyExW(IntPtr hKey, string lpSubKey, uint ulOptions, ACCESS_MASK samDesired, IntPtr phkResult)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "RegOpenKeyExW");
+            SysCall.Delegates.RegOpenKeyExW RegOpenKeyExW = (SysCall.Delegates.RegOpenKeyExW)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RegOpenKeyExW));
+                return RegOpenKeyExW( hKey,  lpSubKey,  ulOptions,  samDesired,  phkResult);
+        }
+
+        public static int RegQueryInfoKeyW(IntPtr hKey, IntPtr lpClass, IntPtr lpcchClass, ref uint lpReserved, IntPtr lpcSubKeys, IntPtr lpcbMaxSubKeyLen, IntPtr lpcbMaxClassLen, IntPtr lpcValues, IntPtr lpcbMaxValueNameLen, IntPtr lpcbMaxValueLen, IntPtr lpcbSecurityDescriptor, IntPtr lpftLastWriteTime)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "RegQueryInfoKeyW");
+            SysCall.Delegates.RegQueryInfoKeyW RegQueryInfoKeyW = (SysCall.Delegates.RegQueryInfoKeyW)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RegQueryInfoKeyW));
+            return RegQueryInfoKeyW( hKey,  lpClass,  lpcchClass, ref  lpReserved,  lpcSubKeys,  lpcbMaxSubKeyLen,  lpcbMaxClassLen,  lpcValues,  lpcbMaxValueNameLen,  lpcbMaxValueLen,  lpcbSecurityDescriptor,  lpftLastWriteTime);
+        }
+
+        public static  int RegCloseKey(IntPtr hKey)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "RegCloseKey");
+            SysCall.Delegates.RegCloseKey RegCloseKey = (SysCall.Delegates.RegCloseKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RegCloseKey));
+            return RegCloseKey(hKey);
+        }
+
+        public static bool CryptAcquireContextA( ref IntPtr phProv, string szContainer, string szProvider, uint dwProvType, uint dwFlags )
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptAcquireContextA");
+            SysCall.Delegates.CryptAcquireContextA CryptAcquireContextA = (SysCall.Delegates.CryptAcquireContextA)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptAcquireContextA));
+            return CryptAcquireContextA(ref  phProv,  szContainer,  szProvider,  dwProvType,  dwFlags);
+        }
+
+        public static bool CryptSetKeyParam( IntPtr hKey, uint dwParam, IntPtr pbData, uint dwFlags )
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptSetKeyParam");
+            SysCall.Delegates.CryptSetKeyParam CryptSetKeyParam = (SysCall.Delegates.CryptSetKeyParam)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptSetKeyParam));
+            return CryptSetKeyParam( hKey,  dwParam,  pbData,  dwFlags);
+        }
+
+        public static bool CryptDestroyKey(IntPtr hKey)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptDestroyKey");
+            SysCall.Delegates.CryptDestroyKey CryptDestroyKey = (SysCall.Delegates.CryptDestroyKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptDestroyKey));
+            return CryptDestroyKey( hKey);
+        }
+
+        public static  bool CryptReleaseContext(IntPtr hProv,uint dwFlags)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptReleaseContext");
+            SysCall.Delegates.CryptReleaseContext CryptReleaseContext = (SysCall.Delegates.CryptReleaseContext)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptReleaseContext));
+            return CryptReleaseContext(hProv, dwFlags);
+        }
+
+        public static bool CryptImportKey(IntPtr hProv,IntPtr pbData,uint      dwDataLen,IntPtr hPubKey,uint      dwFlags, ref IntPtr phKey)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptImportKey");
+            SysCall.Delegates.CryptImportKey CryptImportKey = (SysCall.Delegates.CryptImportKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptImportKey));
+            return CryptImportKey( hProv,  pbData, dwDataLen, hPubKey, dwFlags, ref phKey);
+        }
+
+        public static bool CryptGetProvParam(IntPtr hProv, uint dwParam,IntPtr pbData,ref uint pdwDataLen,uint dwFlags)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptGetProvParam");
+            SysCall.Delegates.CryptGetProvParam CryptGetProvParam = (SysCall.Delegates.CryptGetProvParam)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptGetProvParam));
+            return CryptGetProvParam( hProv,  dwParam,  pbData, ref  pdwDataLen,  dwFlags);
+        }
+
+        public static bool CryptExportKey( IntPtr hKey, IntPtr hExpKey, uint dwBlobType, uint dwFlags, IntPtr pbData, ref uint pdwDataLen )
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptExportKey");
+            SysCall.Delegates.CryptExportKey CryptExportKey = (SysCall.Delegates.CryptExportKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptExportKey));
+            return CryptExportKey( hKey,  hExpKey,  dwBlobType,  dwFlags,  pbData, ref  pdwDataLen);
+        }
+
+        public static  bool CryptGenKey(IntPtr hProv,uint Algid,uint dwFlags,IntPtr phKey)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptGenKey");
+            SysCall.Delegates.CryptGenKey CryptGenKey = (SysCall.Delegates.CryptGenKey)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptGenKey));
+            return CryptGenKey( hProv,  Algid,  dwFlags,  phKey);
+        }
+
+        public static bool CryptDecrypt(IntPtr hKey,IntPtr hHash,bool Final,uint dwFlags,IntPtr pbData,ref uint pdwDataLen)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "CryptDecrypt");
+            SysCall.Delegates.CryptDecrypt CryptDecrypt = (SysCall.Delegates.CryptDecrypt)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CryptDecrypt));
+            return CryptDecrypt( hKey,  hHash,  Final,  dwFlags,  pbData, ref  pdwDataLen);
+        }
+
+        public static int  RegEnumKeyExW(IntPtr hKey,uint dwIndex,IntPtr lpName,IntPtr lpcchName,IntPtr lpReserved,IntPtr lpClass,IntPtr lpcchClass,IntPtr lpftLastWriteTime)
+        {
+            IntPtr proc = GetProcAddress(GetAdvapi32(), "RegEnumKeyExW");
+            SysCall.Delegates.RegEnumKeyExW RegEnumKeyExW = (SysCall.Delegates.RegEnumKeyExW)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RegEnumKeyExW));
+            return RegEnumKeyExW(hKey,  dwIndex,  lpName,  lpcchName,  lpReserved,  lpClass,  lpcchClass,  lpftLastWriteTime);
+        }
+
+        public static IntPtr CreateFileMappingA( IntPtr hFile, IntPtr lpFileMappingAttributes, uint flProtect, uint dwMaximumSizeHigh, uint dwMaximumSizeLow, IntPtr lpName )
+        {
+            IntPtr proc = GetProcAddress(GetKernel32(), "CreateFileMappingA");
+            SysCall.Delegates.CreateFileMappingA CreateFileMappingA = (SysCall.Delegates.CreateFileMappingA)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.CreateFileMappingA));
+            return CreateFileMappingA( hFile,  lpFileMappingAttributes,  flProtect,  dwMaximumSizeHigh,  dwMaximumSizeLow,  lpName);
+        }
+
+        public static IntPtr MapViewOfFile( IntPtr hFileMappingObject, uint dwDesiredAccess, uint dwFileOffsetHigh, uint dwFileOffsetLow, long dwNumberOfBytesToMap)
+        {
+            IntPtr proc = GetProcAddress(GetKernel32(), "MapViewOfFile");
+            SysCall.Delegates.MapViewOfFile MapViewOfFile = (SysCall.Delegates.MapViewOfFile)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.MapViewOfFile));
+            return MapViewOfFile( hFileMappingObject,  dwDesiredAccess,  dwFileOffsetHigh,  dwFileOffsetLow,  dwNumberOfBytesToMap);
+        }
+
+        public static bool UnmapViewOfFile(IntPtr lpBaseAddress)
+        {
+            IntPtr proc = GetProcAddress(GetKernel32(), "UnmapViewOfFile");
+            SysCall.Delegates.UnmapViewOfFile UnmapViewOfFile = (SysCall.Delegates.UnmapViewOfFile)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.UnmapViewOfFile));
+            return UnmapViewOfFile(lpBaseAddress);
+        }
+
+        public static  int NtOpenDirectoryObject(ref IntPtr DirectoryHandle, ACCESS_MASK DesiredAccess, IntPtr ObjectAttributes)
+        {
+            IntPtr proc = GetProcAddress(GetNtDll(), "NtOpenDirectoryObject");
+            SysCall.Delegates.NtOpenDirectoryObject NtOpenDirectoryObject = (SysCall.Delegates.NtOpenDirectoryObject)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NtOpenDirectoryObject));
+            return NtOpenDirectoryObject(ref  DirectoryHandle,  DesiredAccess,  ObjectAttributes);
+        }
+
+        public static int NtQueryDirectoryObject(IntPtr DirectoryHandle, byte[] Buffer, uint Length, bool ReturnSingleEntry, bool RestartScan, ref uint  Context, ref uint  ReturnLength)
+        {
+            IntPtr proc = GetProcAddress(GetNtDll(), "NtQueryDirectoryObject");
+            SysCall.Delegates.NtQueryDirectoryObject NtQueryDirectoryObject = (SysCall.Delegates.NtQueryDirectoryObject)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.NtQueryDirectoryObject));
+            return NtQueryDirectoryObject(DirectoryHandle, Buffer,  Length,  ReturnSingleEntry,  RestartScan, ref   Context, ref   ReturnLength);
+        }
+
+        public static  bool RtlEqualUnicodeString(UNICODE_STRING String1, UNICODE_STRING String2, bool CaseInSensitive)
+        {
+            IntPtr proc = GetProcAddress(GetNtDll(), "RtlEqualUnicodeString");
+            SysCall.Delegates.RtlEqualUnicodeString RtlEqualUnicodeString = (SysCall.Delegates.RtlEqualUnicodeString)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.RtlEqualUnicodeString));
+            return RtlEqualUnicodeString( String1,  String2,  CaseInSensitive);
+        }
+
+        public static bool GetFileAttributesExW(string lpFileName,GET_FILEEX_INFO_LEVELS fInfoLevelId,ref WIN32_FILE_ATTRIBUTE_DATA lpFileInformation)
+        {
+            IntPtr proc = GetProcAddress(GetKernel32(), "GetFileAttributesExW");
+            SysCall.Delegates.GetFileAttributesExW GetFileAttributesExW = (SysCall.Delegates.GetFileAttributesExW)Marshal.GetDelegateForFunctionPointer(proc, typeof(SysCall.Delegates.GetFileAttributesExW));
+            return GetFileAttributesExW(lpFileName, fInfoLevelId, ref lpFileInformation);
+        }
     }
 }

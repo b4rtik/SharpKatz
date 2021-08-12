@@ -297,7 +297,7 @@ namespace SharpKatz
             return arr;
         }
 
-        private static DateTime ToDateTime(FILETIME time)
+        public static DateTime ToDateTime(FILETIME time)
         {
             long fileTime = (((long)time.dwHighDateTime) << 32) | ((uint)time.dwLowDateTime);
 
