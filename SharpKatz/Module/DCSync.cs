@@ -39,8 +39,78 @@ namespace SharpKatz.Module
         const int DRS_FULL_SYNC_NOW = 0x00008000;
         const int DRS_SYNC_URGENT = 0x00080000;
 
-        const int DRS_EXT_GETCHGREPLY_V6 = 0x04000000;
-        const int DRS_EXT_STRONG_ENCRYPTION = 0x00008000;
+        const uint DRS_EXT_BASE = 0x00000001;
+        const uint DRS_EXT_ASYNCREPL = 0x00000002;
+        const uint DRS_EXT_REMOVEAPI = 0x00000004;
+        const uint DRS_EXT_MOVEREQ_V2 = 0x00000008;
+        const uint DRS_EXT_GETCHG_DEFLATE = 0x00000010;
+        const uint DRS_EXT_DCINFO_V1 = 0x00000020;
+        const uint DRS_EXT_RESTORE_USN_OPTIMIZATION = 0x00000040;
+        const uint DRS_EXT_ADDENTRY = 0x00000080;
+        const uint DRS_EXT_KCC_EXECUTE = 0x00000100;
+        const uint DRS_EXT_ADDENTRY_V2 = 0x00000200;
+        const uint DRS_EXT_LINKED_VALUE_REPLICATION = 0x00000400;
+        const uint DRS_EXT_DCINFO_V2 = 0x00000800;
+        const uint DRS_EXT_INSTANCE_TYPE_NOT_REQ_ON_MOD = 0x00001000;
+        const uint DRS_EXT_CRYPTO_BIND = 0x00002000;
+        const uint DRS_EXT_GET_REPL_INFO = 0x00004000;
+        const uint DRS_EXT_STRONG_ENCRYPTION = 0x00008000;
+        const uint DRS_EXT_DCINFO_VFFFFFFFF = 0x00010000;
+        const uint DRS_EXT_TRANSITIVE_MEMBERSHIP = 0x00020000;
+        const uint DRS_EXT_ADD_SID_HISTORY = 0x00040000;
+	    const uint DRS_EXT_POST_BETA3 = 0x00080000;
+        const uint DRS_EXT_GETCHGREQ_V5 = 0x00100000;
+        const uint DRS_EXT_GETMEMBERSHIPS2 = 0x00200000;
+        const uint DRS_EXT_GETCHGREQ_V6 = 0x00400000;
+        const uint DRS_EXT_NONDOMAIN_NCS = 0x00800000;
+        const uint DRS_EXT_GETCHGREQ_V8 = 0x01000000;
+        const uint DRS_EXT_GETCHGREPLY_V5 = 0x02000000;
+        const uint DRS_EXT_GETCHGREPLY_V6 = 0x04000000;
+        const uint DRS_EXT_WHISTLER_BETA3 = 0x08000000;
+        const uint DRS_EXT_W2K3_DEFLATE = 0x10000000;
+        const uint DRS_EXT_GETCHGREQ_V10 = 0x20000000;
+        const uint DRS_EXT_RESERVED_FOR_WIN2K_OR_DOTNET_PART2 = 0x40000000;
+        const uint DRS_EXT_RESERVED_FOR_WIN2K_OR_DOTNET_PART3 = 0x80000000;
+
+        const uint MIN_EXT = DRS_EXT_BASE + DRS_EXT_GETCHGREQ_V8 + DRS_EXT_GETCHGREPLY_V6;
+
+        const uint ALL_EXT = DRS_EXT_BASE +
+	        DRS_EXT_CRYPTO_BIND +
+	        DRS_EXT_STRONG_ENCRYPTION +
+	        DRS_EXT_ASYNCREPL +
+	        DRS_EXT_REMOVEAPI +
+	        DRS_EXT_MOVEREQ_V2 +
+	        DRS_EXT_GETCHG_DEFLATE +
+	        DRS_EXT_DCINFO_V1 +
+	        DRS_EXT_RESTORE_USN_OPTIMIZATION +
+	        DRS_EXT_ADDENTRY +
+	        DRS_EXT_KCC_EXECUTE +
+	        DRS_EXT_ADDENTRY_V2 +
+	        DRS_EXT_LINKED_VALUE_REPLICATION +
+	        DRS_EXT_DCINFO_V2 +
+	        DRS_EXT_INSTANCE_TYPE_NOT_REQ_ON_MOD +
+	        DRS_EXT_GET_REPL_INFO +
+	        DRS_EXT_DCINFO_VFFFFFFFF +
+	        DRS_EXT_TRANSITIVE_MEMBERSHIP +
+	        DRS_EXT_ADD_SID_HISTORY +
+	        DRS_EXT_POST_BETA3 +
+	        DRS_EXT_GETCHGREQ_V5 +
+	        DRS_EXT_GETMEMBERSHIPS2 +
+	        DRS_EXT_GETCHGREQ_V6 +
+	        DRS_EXT_NONDOMAIN_NCS +
+	        DRS_EXT_GETCHGREQ_V8 +
+	        DRS_EXT_GETCHGREPLY_V5 +
+	        DRS_EXT_GETCHGREPLY_V6 +
+	        DRS_EXT_WHISTLER_BETA3 +
+	        DRS_EXT_W2K3_DEFLATE +
+	        DRS_EXT_GETCHGREQ_V10;
+
+        // EXT2
+        const int DRS_EXT_ADAM = 0x00000001;
+        const int DRS_EXT_LH_BETA2 = 0x00000002;
+        const int DRS_EXT_RECYCLE_BIN = 0x00000004;
+	    const int DRS_EXT_GETCHGREPLY_V9 = 0x00000100;
+        const int DRS_EXT_PAM = 0x00000200;
 
         const int RPC_C_AUTHN_LEVEL_PKT_PRIVACY = 6;
         const int RPC_C_OPT_SECURITY_CALLBACK = 10;
@@ -676,7 +746,9 @@ namespace SharpKatz.Module
             UserGuid = System.Guid.Empty;
             DrsExtensionsInt = new DRS_EXTENSIONS_INT();
             DrsExtensionsInt.cb = (uint)(Marshal.SizeOf(typeof(DRS_EXTENSIONS_INT)) - Marshal.SizeOf(typeof(uint)));
-            DrsExtensionsInt.dwFlags = DRS_EXT_GETCHGREPLY_V6 | DRS_EXT_STRONG_ENCRYPTION;
+            DrsExtensionsInt.dwFlags = ALL_EXT;
+            DrsExtensionsInt.dwFlagsExt = DRS_EXT_LH_BETA2 | DRS_EXT_RECYCLE_BIN | DRS_EXT_PAM;
+            DrsExtensionsInt.dwExtCaps = DRS_EXT_LH_BETA2 | DRS_EXT_RECYCLE_BIN | DRS_EXT_PAM;
 
             result = (NTSTATUS)DrsrGetDCBind(hBinding, new Guid("e24d201a-4fd6-11d1-a3da-0000f875ae0d"), DrsExtensionsInt, out extensions, out hDrs);
 
